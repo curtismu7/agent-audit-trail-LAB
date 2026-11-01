@@ -1,0 +1,228 @@
+{
+  "schema": "demo-content-pack/1",
+  "id": "agent-audit-trail-lab",
+  "title": "Agent Audit Trail LAB",
+  "version": "0.1.0",
+  "demo": {
+    "id": "agent-audit-trail-lab",
+    "name": "Agent Audit Trail LAB",
+    "catalog": "D17",
+    "baseUrl": "http://localhost:6600",
+    "doctor": "/api/health",
+    "tags": [
+      "audit-trail",
+      "correlation",
+      "delegation",
+      "hash-chain"
+    ]
+  },
+  "glossary": [
+    {
+      "id": "act-claim",
+      "term": "act claim and delegation chain",
+      "definition": "A nested act claim in a token names who is acting for the subject. The outermost act is the current actor, and the nesting reads as the delegation chain: human, orchestrator, sub-agent. A chain that repeats an actor, or is deeper than 8 hops, is flagged and shown as a gap rather than passed off as complete.",
+      "aliases": [
+        "delegation chain",
+        "actor claim"
+      ]
+    },
+    {
+      "id": "audit-trail",
+      "term": "Audit trail",
+      "definition": "The record that answers who did what, through which agent. Here it is a seeded, synthetic store of events from six sources (identity provider, token service, gateway, policy engine, human approval, kill switch), normalized to one envelope. Nothing real is touched."
+    },
+    {
+      "id": "correlation-id",
+      "term": "Correlation id",
+      "definition": "A value that appears in events from different sources so they can be tied to one action: the W3C trace id first, then the session id, then actor and tool ids. An event that carries none cannot be tied to a human or a transaction and is shown as orphaned.",
+      "aliases": [
+        "trace id"
+      ]
+    },
+    {
+      "id": "demo-mode",
+      "term": "Simulation",
+      "definition": "Every event is synthetic and seeded, the hosts are .example, and no network, tenant or credential exists. Tokens shown are mock-issued claims, labelled as such."
+    },
+    {
+      "id": "gap",
+      "term": "Gap",
+      "definition": "A hop the record should hold but does not, for example an agent that acted with no token-exchange event. A denied call with no tool result is not a gap: that is a complete, correct record."
+    },
+    {
+      "id": "hash-chain",
+      "term": "Tamper-evident hash chain",
+      "definition": "Each stored entry carries an HMAC-SHA256 over its sequence number, time, event and the previous entry's hash. Editing, deleting, inserting, reordering or changing a timestamp breaks verification; truncation is caught by a separately held head checkpoint."
+    },
+    {
+      "id": "inert-text",
+      "term": "Inert text",
+      "definition": "Every string that came from an event source is untrusted. Control and invisible characters are shown as [U+XXXX], sizes are bounded, and the UI renders text, never markup."
+    },
+    {
+      "id": "join",
+      "term": "Correlation join",
+      "definition": "Stitching events from different sources into one per-action timeline. The plain-English sentence is built only from fields in those events, each fact cites its event ids, and a link made by session id and time window alone is labelled an inference."
+    },
+    {
+      "id": "orphaned-event",
+      "term": "Orphaned event",
+      "definition": "An event with no trace id and no session id. It cannot be tied to anyone, so the join shows it alone and lists same-agent events nearby as possibly related, not joined."
+    },
+    {
+      "id": "read-only-tools",
+      "term": "Read-only audit tools",
+      "definition": "Exactly three tools exist: search_audit_activities, get_audit_activity and audit_summary, over REST and MCP-style JSON-RPC. The surface exposes exactly what is implemented, and there is no write tool to find. Demo controls (run, reset, tamper) are buttons, not tools."
+    },
+    {
+      "id": "retention-clamp",
+      "term": "Retention clamp",
+      "definition": "A request for a longer window than the store keeps is clamped to the retention window and the result says so. The window of about 7 days was observed in a demo environment and is UNVERIFIED against product documentation; this app makes no claim about real retention, field names or latency."
+    },
+    {
+      "id": "silent-empty",
+      "term": "Silent-empty trap",
+      "definition": "Asking past retention is not an error: the upstream answers with zero events and no warning, which reads as nothing happened. The mock reproduces it so it can be taught, and the audit tool layer clamps and says so instead."
+    },
+    {
+      "id": "token-exchange",
+      "term": "Token exchange",
+      "definition": "RFC 8693: an agent swaps the token it was given for one that carries the human as subject and itself as actor. Each exchange is an event, so a two-hop delegation must leave two events on record."
+    },
+    {
+      "id": "traceparent",
+      "term": "traceparent",
+      "definition": "The W3C Trace Context header version-traceid-parentid-flags, all lowercase hex. This app parses it strictly: a malformed or all-zero value is flagged and treated as no trace id, never trusted."
+    }
+  ],
+  "sources": [],
+  "cards": [
+    {
+      "id": "audit-flow",
+      "label": "Audit flow",
+      "description": "Event sources, normalizer, store, audit tools and join as a movable diagram (diagram-studio/1 data) with Simulate.",
+      "group": "concept",
+      "terms": [
+        "demo-mode",
+        "audit-trail"
+      ],
+      "story": "S01",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    },
+    {
+      "id": "gaps-and-orphans",
+      "label": "Gaps and orphaned events",
+      "description": "Run the orphaned and two-hop scenarios and see what is missing shown, not guessed.",
+      "group": "try-it",
+      "terms": [
+        "gap",
+        "orphaned-event",
+        "correlation-id",
+        "traceparent"
+      ],
+      "story": "S02",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    },
+    {
+      "id": "retention",
+      "label": "The retention trap",
+      "description": "Ask for 30 days and watch the naive upstream answer silently empty while the audit tool clamps and says so.",
+      "group": "try-it",
+      "terms": [
+        "retention-clamp",
+        "silent-empty"
+      ],
+      "story": "S04",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    },
+    {
+      "id": "tamper",
+      "label": "Tamper with the record",
+      "description": "Edit, delete, insert, reorder, truncate or change a timestamp on a copy and watch verification fail.",
+      "group": "try-it",
+      "terms": [
+        "hash-chain"
+      ],
+      "story": "S03",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    },
+    {
+      "id": "tools",
+      "label": "The three read-only tools",
+      "description": "Call the MCP-style endpoint and see that no write tool exists.",
+      "group": "concept",
+      "terms": [
+        "read-only-tools",
+        "inert-text"
+      ],
+      "story": "S04",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    },
+    {
+      "id": "who-did-what",
+      "label": "Who did what, through which agent",
+      "description": "Run a scenario and read the one-sentence answer, the delegation chain and the facts with their evidence.",
+      "group": "try-it",
+      "terms": [
+        "audit-trail",
+        "join",
+        "act-claim",
+        "token-exchange"
+      ],
+      "story": "S05",
+      "action": {
+        "type": "route",
+        "href": "/"
+      }
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "audit-flow",
+      "label": "Audit flow",
+      "href": "/"
+    }
+  ],
+  "stories": [
+    {
+      "id": "S01",
+      "title": "Emit",
+      "say": "Six sources each log in their own shape. None of them knows about the others."
+    },
+    {
+      "id": "S02",
+      "title": "Normalize",
+      "say": "One envelope, with the W3C trace id parsed strictly. A bad traceparent is flagged, never trusted."
+    },
+    {
+      "id": "S03",
+      "title": "Store",
+      "say": "Appended to a hash chain. Edit, delete, insert or reorder and verify fails."
+    },
+    {
+      "id": "S04",
+      "title": "Query",
+      "say": "Three read-only tools. A window past retention is clamped and said so, never silently emptied."
+    },
+    {
+      "id": "S05",
+      "title": "Join",
+      "say": "Correlation ids stitch the timeline. Orphans and gaps are shown, not guessed."
+    }
+  ]
+}

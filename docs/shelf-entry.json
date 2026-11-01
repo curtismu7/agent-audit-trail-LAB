@@ -1,0 +1,16 @@
+{
+  "demos": [
+    {
+      "id": "agent-audit-trail-lab",
+      "name": "Agent Audit Trail LAB",
+      "kind": "Demo",
+      "description": "Who did what through which agent: seeded synthetic events from six sources, a read-only audit tool surface, and a correlation join into one timeline per action, with a tamper-evident hash chain. Fully mock; Live is refused.",
+      "url": "http://localhost:6600",
+      "healthPath": "/api/health",
+      "composeFile": "agent-audit-trail-LAB/docker-compose.yml",
+      "composeOverlays": [],
+      "catalogId": "D17",
+      "notes": "Host-run: npm ci && npm run build && npm start (port 6600; npm run doctor checks it). Or: docker compose up --build -d (publishes 127.0.0.1:6600 only; HOST_PORT changes it, and the shelf's Start button does not set HOST_PORT). Mock only: the Live toggle explains why it is not available."
+    }
+  ]
+}

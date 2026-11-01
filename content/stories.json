@@ -1,0 +1,27 @@
+[
+  {
+    "id": "S01",
+    "title": "Emit",
+    "say": "Six sources each log in their own shape. None of them knows about the others."
+  },
+  {
+    "id": "S02",
+    "title": "Normalize",
+    "say": "One envelope, with the W3C trace id parsed strictly. A bad traceparent is flagged, never trusted."
+  },
+  {
+    "id": "S03",
+    "title": "Store",
+    "say": "Appended to a hash chain. Edit, delete, insert or reorder and verify fails."
+  },
+  {
+    "id": "S04",
+    "title": "Query",
+    "say": "Three read-only tools. A window past retention is clamped and said so, never silently emptied."
+  },
+  {
+    "id": "S05",
+    "title": "Join",
+    "say": "Correlation ids stitch the timeline. Orphans and gaps are shown, not guessed."
+  }
+]

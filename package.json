@@ -1,0 +1,32 @@
+{
+  "name": "agent-audit-trail-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agent Audit Trail LAB: who did what through which agent. A seeded mock audit store, a read-only MCP-style audit tool surface, and a correlation join. Nothing real is touched.",
+  "license": "MIT",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "start": "npm start -w server",
+    "dev": "echo 'run: npm start (API, 6600) and npm run dev -w web (UI, 6610)'",
+    "build": "npm run build -w web",
+    "test": "npm test -w server && npm test -w web && node --test scripts/*.test.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "reset": "node scripts/reset.mjs",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "talk-track": "node scripts/build-talk-track.mjs",
+    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs",
+    "e2e": "node scripts/e2e.mjs",
+    "mutation-check": "node scripts/mutation-check.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "playwright": "^1.64.1"
+  }
+}

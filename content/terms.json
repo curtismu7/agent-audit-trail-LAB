@@ -1,0 +1,79 @@
+[
+  {
+    "id": "audit-trail",
+    "term": "Audit trail",
+    "definition": "The record that answers who did what, through which agent. Here it is a seeded, synthetic store of events from six sources (identity provider, token service, gateway, policy engine, human approval, kill switch), normalized to one envelope. Nothing real is touched."
+  },
+  {
+    "id": "correlation-id",
+    "term": "Correlation id",
+    "definition": "A value that appears in events from different sources so they can be tied to one action: the W3C trace id first, then the session id, then actor and tool ids. An event that carries none cannot be tied to a human or a transaction and is shown as orphaned.",
+    "aliases": [
+      "trace id"
+    ]
+  },
+  {
+    "id": "traceparent",
+    "term": "traceparent",
+    "definition": "The W3C Trace Context header version-traceid-parentid-flags, all lowercase hex. This app parses it strictly: a malformed or all-zero value is flagged and treated as no trace id, never trusted."
+  },
+  {
+    "id": "token-exchange",
+    "term": "Token exchange",
+    "definition": "RFC 8693: an agent swaps the token it was given for one that carries the human as subject and itself as actor. Each exchange is an event, so a two-hop delegation must leave two events on record."
+  },
+  {
+    "id": "act-claim",
+    "term": "act claim and delegation chain",
+    "definition": "A nested act claim in a token names who is acting for the subject. The outermost act is the current actor, and the nesting reads as the delegation chain: human, orchestrator, sub-agent. A chain that repeats an actor, or is deeper than 8 hops, is flagged and shown as a gap rather than passed off as complete.",
+    "aliases": [
+      "delegation chain",
+      "actor claim"
+    ]
+  },
+  {
+    "id": "join",
+    "term": "Correlation join",
+    "definition": "Stitching events from different sources into one per-action timeline. The plain-English sentence is built only from fields in those events, each fact cites its event ids, and a link made by session id and time window alone is labelled an inference."
+  },
+  {
+    "id": "gap",
+    "term": "Gap",
+    "definition": "A hop the record should hold but does not, for example an agent that acted with no token-exchange event. A denied call with no tool result is not a gap: that is a complete, correct record."
+  },
+  {
+    "id": "orphaned-event",
+    "term": "Orphaned event",
+    "definition": "An event with no trace id and no session id. It cannot be tied to anyone, so the join shows it alone and lists same-agent events nearby as possibly related, not joined."
+  },
+  {
+    "id": "retention-clamp",
+    "term": "Retention clamp",
+    "definition": "A request for a longer window than the store keeps is clamped to the retention window and the result says so. The window of about 7 days was observed in a demo environment and is UNVERIFIED against product documentation; this app makes no claim about real retention, field names or latency."
+  },
+  {
+    "id": "silent-empty",
+    "term": "Silent-empty trap",
+    "definition": "Asking past retention is not an error: the upstream answers with zero events and no warning, which reads as nothing happened. The mock reproduces it so it can be taught, and the audit tool layer clamps and says so instead."
+  },
+  {
+    "id": "hash-chain",
+    "term": "Tamper-evident hash chain",
+    "definition": "Each stored entry carries an HMAC-SHA256 over its sequence number, time, event and the previous entry's hash. Editing, deleting, inserting, reordering or changing a timestamp breaks verification; truncation is caught by a separately held head checkpoint."
+  },
+  {
+    "id": "read-only-tools",
+    "term": "Read-only audit tools",
+    "definition": "Exactly three tools exist: search_audit_activities, get_audit_activity and audit_summary, over REST and MCP-style JSON-RPC. The surface exposes exactly what is implemented, and there is no write tool to find. Demo controls (run, reset, tamper) are buttons, not tools."
+  },
+  {
+    "id": "inert-text",
+    "term": "Inert text",
+    "definition": "Every string that came from an event source is untrusted. Control and invisible characters are shown as [U+XXXX], sizes are bounded, and the UI renders text, never markup."
+  },
+  {
+    "id": "demo-mode",
+    "term": "Simulation",
+    "definition": "Every event is synthetic and seeded, the hosts are .example, and no network, tenant or credential exists. Tokens shown are mock-issued claims, labelled as such."
+  }
+]

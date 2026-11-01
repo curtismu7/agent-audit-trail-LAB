@@ -1,0 +1,5 @@
+{
+  "brand": { "title": "Agent Audit Trail", "tagline": "Who did what, through which agent" },
+  "vocabulary": { "agent": "agent", "human": "human" },
+  "vertical": "retail"
+}

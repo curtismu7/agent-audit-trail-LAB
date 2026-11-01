@@ -1,0 +1,32 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "audit-flow",
+  "title": "Audit flow: event sources to the joined timeline",
+  "lede": "Six sources each log in their own shape. A normalizer gives them one envelope, a hash-chained store keeps them, three read-only audit tools query them, and the join stitches one timeline per action. Simulated: every event is synthetic and seeded.",
+  "groups": {
+    "emit": { "label": "Event sources", "color": "dark" },
+    "record": { "label": "Store", "color": "grey" },
+    "read": { "label": "Audit tools", "color": "blue" },
+    "answer": { "label": "Join", "color": "red" }
+  },
+  "nodes": [
+    { "id": "sources", "label": "Event sources", "group": "emit", "x": 0, "y": 0, "sub": ["idp, token, gateway, policy, hitl, killswitch"] },
+    { "id": "normalizer", "label": "Normalizer", "group": "record", "x": 400, "y": 0, "sub": ["one envelope, traceparent checked"] },
+    { "id": "store", "label": "Audit store", "group": "record", "x": 800, "y": 0, "sub": ["append-only, HMAC hash chain"] },
+    { "id": "tools", "label": "Audit tools", "group": "read", "x": 800, "y": 200, "sub": ["3 read-only tools, REST + MCP"] },
+    { "id": "join", "label": "Join / timeline", "group": "answer", "x": 400, "y": 200, "sub": ["who did what, through which agent"] }
+  ],
+  "edges": [
+    { "source": "sources", "target": "normalizer", "label": "raw records" },
+    { "source": "normalizer", "target": "store", "label": "envelopes" },
+    { "source": "store", "target": "tools", "label": "read-only view" },
+    { "source": "tools", "target": "join", "label": "query results" }
+  ],
+  "steps": [
+    { "title": "Emit", "what": "Six sources each log in their own shape. None of them knows about the others.", "edges": [] },
+    { "title": "Normalize", "what": "One envelope, with the W3C trace id parsed strictly. A bad traceparent is flagged, never trusted.", "edges": [0] },
+    { "title": "Store", "what": "Appended to a hash chain. Edit, delete, insert or reorder and verify fails.", "edges": [1] },
+    { "title": "Query", "what": "Three read-only tools. A window past retention is clamped and said so, never silently emptied.", "edges": [2] },
+    { "title": "Join", "what": "Correlation ids stitch the timeline. Orphans and gaps are shown, not guessed.", "edges": [3] }
+  ]
+}
