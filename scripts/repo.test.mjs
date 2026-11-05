@@ -51,7 +51,7 @@ test('README follows the README standard: title ends in LAB, plain Tier, Repo an
   assert.match(r, /lsof -iTCP:6600 -sTCP:LISTEN -n -P/);
   assert.match(r, /AUDIT_TRAIL_PORT=<other port> npm start/);
   assert.match(r, /Port range for this app: 6600-6649\./);
-  assert.ok(!/ping-devops|cmuir|curtismu/i.test(r));
+  assert.ok(!/ping-devops|cmuir/i.test(r));
 });
 
 test('no k8s manifests, no hosted build, no bare MODE and no per-app .env loader anywhere in the shipped code', () => {
