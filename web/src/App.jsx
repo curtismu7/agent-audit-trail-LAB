@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import ShelfLink from "./components/ShelfLink.jsx";
 import { getDiagram, getEvent, getHealth, getInfo, getJoin, getScenarios, postReset, runScenario, searchEvents, verifyChain } from "./lib/api.js";
 import { plural, safe } from "./lib/format.js";
 import { UnverifiedBadge } from "./components/Badges.jsx";
@@ -152,6 +153,7 @@ export default function App() {
           {TABS.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
         </nav>
         <div className="tools-right">
+            <ShelfLink />
           <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>{presenter ? "Exit presenter mode (Esc)" : "Presenter mode (P)"}</button>
           <button type="button" onClick={() => reset()} aria-disabled={busy ? "true" : undefined}>Reset</button>
           <button type="button" onClick={() => setTheme(dark ? "light" : "dark")} aria-label={`Switch to ${dark ? "light" : "dark"} theme`}>{dark ? "Light" : "Dark"}</button>
