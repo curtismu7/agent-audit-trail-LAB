@@ -3,7 +3,7 @@
 Who did what through which agent? This lab shows how an organization answers that for AI agent activity: events from six systems land in one audit store, are queried through a small read-only MCP-style tool surface, and are joined by correlation ids into one timeline per action.
 
 Tier: Demo
-Repo: https://github.com/ping-sandbox/agent-audit-trail-LAB
+Repo: https://github.com/curtismu7/agent-audit-trail-LAB
 Catalog: D17
 
 Catalog D17 is the id this app carried in the standalone plan before it moved to a -LAB repo. It is carried over unchanged; whether it matches a real catalog row has not been checked, so treat it as a plan id.
@@ -30,7 +30,7 @@ What it teaches:
 Prerequisites: Node 26 or newer. Docker only if you use the Docker form. Mock mode works with no setup at all: no tenant, no credentials, no settings file.
 
 ```
-git clone https://github.com/ping-sandbox/agent-audit-trail-LAB.git
+git clone https://github.com/curtismu7/agent-audit-trail-LAB.git
 cd agent-audit-trail-LAB
 npm ci
 npm run build
