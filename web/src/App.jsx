@@ -13,8 +13,10 @@ import Story from "./components/Story.jsx";
 import ToolsTab from "./components/ToolsTab.jsx";
 import WhoPanel from "./components/WhoPanel.jsx";
 
-const initialTheme = () => safe(() => localStorage.getItem("aat-theme"), null)
-  || (safe(() => window.matchMedia("(prefers-color-scheme: dark)").matches, false) ? "dark" : "light");
+const initialTheme = () => {
+  const t = safe(() => localStorage.getItem("aat-theme"), null);
+  return ["auto", "light", "dark"].includes(t) ? t : "auto";
+};
 const FALLBACK_BANNER = "SIMULATION, MOCK mode: every event here is synthetic and seeded. No tenant, no network, no credentials. Tokens shown are mock-issued claims.";
 const FALLBACK_LIVE_REFUSAL = "Live mode is not available in this app: it has no live audit source to connect to, and everything shown is a seeded mock. The page stays in mock mode.";
 const TABS = [["story", "Story"], ["events", "Events"], ["retention", "Retention"], ["tools", "Tools"], ["integrity", "Integrity"], ["diagram", "Diagram"]];
@@ -47,7 +49,8 @@ export default function App() {
   const rawHeading = useRef(null);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
     safe(() => localStorage.setItem("aat-theme", theme));
   }, [theme]);
 
@@ -123,7 +126,7 @@ export default function App() {
     } catch (e) { setError(`Reset failed: ${e.message}`); } finally { setBusy(false); }
   };
 
-  const dark = theme === "dark";
+  const setThemePersist = (t) => { setTheme(t); safe(() => localStorage.setItem("aat-theme", t)); };
   const scenario = scenarios.find((s) => s.id === scenarioId);
   const counts = {
     sources: sim ? sim.run.eventIds.length : undefined,
@@ -157,7 +160,13 @@ export default function App() {
             <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
           <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>{presenter ? "Exit presenter mode (Esc)" : "Presenter mode (P)"}</button>
           <button type="button" onClick={() => reset()} aria-disabled={busy ? "true" : undefined}>Reset</button>
-          <button type="button" onClick={() => setTheme(dark ? "light" : "dark")} aria-label={`Switch to ${dark ? "light" : "dark"} theme`}>{dark ? "Light" : "Dark"}</button>
+          <label className="inline">Theme
+            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
+              <option value="auto">Auto</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
         </div>
       </header>
       <main id="main" tabIndex={-1} className="page">
