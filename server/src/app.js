@@ -80,11 +80,21 @@ export function createApp({ runtime, health = createHealth(), webDist = null, cu
 
   api.route('/info').get((req, res) => res.json({
     mode: req.rt.mode, modes: { mock: true, live: false }, liveRefusal: LIVE_REFUSAL, simulated: true, workspace: req.workspaceId, customer,
+    // Rule 19: what the Mock/Real toggle needs. This lab is mock only, so Real is never available.
+    source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL,
     vertical: req.rt.vertical, verticals: VERTICALS,
     banner: 'SIMULATION, MOCK mode: every event here is synthetic and seeded. No tenant, no network, no credentials. Tokens shown are mock-issued claims.',
     retentionDays: RETENTION_DAYS, retentionProvenance: UNVERIFIED, maxLimit: MAX_LIMIT,
     events: req.rt.store.size, epoch: req.rt.epoch, tamperKinds: TAMPER_KINDS,
   })).all(methods('GET'));
+
+  // Rule 19: runtime mode is server-side. This lab is mock only, so mock→real is refused 409 and real→mock is a no-op.
+  api.route('/mode').post((req, res) => {
+    const next = req.body?.source;
+    if (next !== 'mock' && next !== 'real') return bad(res, 'source must be exactly "mock" or "real"');
+    if (next === 'real') return res.status(409).json({ error: 'real_not_available', source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL, message: LIVE_REFUSAL });
+    return res.json({ source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL, message: 'This lab is mock only; the page stays in mock mode.' });
+  }).all(methods('POST'));
 
   // Diagrams are diagram-studio/1 data, loaded by name (rule 17).
   api.route('/diagram').get((req, res) => {

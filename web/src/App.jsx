@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
 import { workspaceId } from "./lib/api.js";
-import { getDiagram, getEvent, getHealth, getInfo, getJoin, getScenarios, postReset, runScenario, searchEvents, verifyChain } from "./lib/api.js";
+import { getDiagram, getEvent, getHealth, getInfo, getJoin, getMode, getScenarios, postMode, postReset, runScenario, searchEvents, verifyChain } from "./lib/api.js";
 import { plural, safe } from "./lib/format.js";
 import { UnverifiedBadge } from "./components/Badges.jsx";
 import EventsTab from "./components/EventsTab.jsx";
@@ -44,6 +44,10 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [liveNote, setLiveNote] = useState("");
+  const [modeBusy, setModeBusy] = useState(false);
+  const source = info?.source ?? "mock";
+  const realAvailable = info ? info.realAvailable !== false : false;
+  const realReason = info?.realReason || FALLBACK_LIVE_REFUSAL;
   const [storyNow, setStoryNow] = useState(-1);
   const whoHeading = useRef(null);
   const rawHeading = useRef(null);
@@ -66,6 +70,21 @@ export default function App() {
   }, []);
 
   const refreshInfo = useCallback(() => getInfo().then(setInfo, () => setInfo(null)), []);
+  // Rule 19: switching is a server call (POST /api/mode), then the page reloads its data so every view
+  // reflects the mode the server answered with. A refused switch shows the server's reason.
+  const switchMode = useCallback(async (next) => {
+    if (modeBusy) return;
+    setModeBusy(true);
+    try {
+      await postMode(next);
+      setLiveNote("");
+      await refreshInfo();
+    } catch (e) {
+      setLiveNote(e.message || realReason);
+    } finally {
+      setModeBusy(false);
+    }
+  }, [modeBusy, refreshInfo, realReason]);
   useEffect(() => {
     getHealth().then(setHealth, () => setHealth({ unreachable: true }));
     refreshInfo();
@@ -149,8 +168,9 @@ export default function App() {
         <h1>{info?.customer?.brand?.title ?? "Agent Audit Trail"}</h1>
         <span className="chip chip--demo" data-testid="mode-badge">DEMO<span className="sr-only">: seeded synthetic events, nothing real</span></span>
         <div className="seg" role="group" aria-label="Mode">
-          <button type="button" aria-pressed="true" onClick={() => setLiveNote("")} data-testid="mode-mock">Mock</button>
-          <button type="button" aria-pressed="false" onClick={() => setLiveNote(info?.liveRefusal || FALLBACK_LIVE_REFUSAL)} data-testid="mode-live">Live</button>
+          <button type="button" aria-pressed={source === "mock"} onClick={() => switchMode("mock")} data-testid="mode-mock">Mock</button>
+          {/* Rule 19: Real shows the server's reason in its tooltip when this mock-only lab cannot go live. */}
+          <button type="button" aria-pressed={source === "real"} disabled={!realAvailable} title={realAvailable ? undefined : realReason} onClick={() => switchMode("real")} data-testid="mode-live">Real</button>
         </div>
         <span className="chip" data-testid="mode-header">mode: {info?.mode ?? "mock"}</span>
         <nav aria-label="Views" className="tabs">

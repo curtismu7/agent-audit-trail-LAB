@@ -42,6 +42,8 @@ export const getRetentionDemo = (days) => call(`/api/retention-demo?days=${days}
 export const verifyChain = () => call("/api/chain/verify");
 export const tamperDemo = (kind) => call("/api/chain/tamper-demo", "POST", { kind });
 export const postReset = (vertical) => call("/api/reset", "POST", vertical ? { vertical } : undefined);
+export const getMode = () => call("/api/info");
+export const postMode = (source) => call("/api/mode", "POST", { source });
 
 const FILTER_KEYS = ["days", "limit", "cursor", "eventType", "source", "traceId", "sessionId", "actor", "subject", "tool", "decision", "orphaned"];
 // Only non-empty, known filters are sent. The server validates every one again.

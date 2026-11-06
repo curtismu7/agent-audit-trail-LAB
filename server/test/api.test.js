@@ -19,7 +19,27 @@ test('health: demo-health/1, GET only', async () => {
 test('info states the simulation, the retention provenance and the cap', async () => {
   const r = await get('/api/info');
   assert.equal(r.json.mode, 'mock'); assert.equal(r.json.simulated, true);
+  // Rule 19: the mode view the toggle reads.
+  assert.equal(r.json.source, 'mock'); assert.equal(r.json.realAvailable, false); assert.match(r.json.realReason, /mock only|not available/i);
   assert.match(r.json.banner, /SIMULATION/); assert.match(r.json.retentionProvenance, /UNVERIFIED/); assert.equal(r.json.retentionDays, 7);
+});
+
+test('rule 19: POST /api/mode takes exactly {source}, refuses mock→real with 409 and a clear reason, and real→mock stays mock', async () => {
+  const refused = await post('/api/mode', { source: 'real' });
+  assert.equal(refused.status, 409);
+  assert.equal(refused.json.error, 'real_not_available');
+  assert.equal(refused.json.realAvailable, false);
+  assert.match(refused.json.realReason, /not available|mock/i);
+  assert.equal(refused.json.source, 'mock');
+  const stay = await post('/api/mode', { source: 'mock' });
+  assert.equal(stay.status, 200);
+  assert.equal(stay.json.source, 'mock');
+  const bad = await post('/api/mode', { source: 'live' });
+  assert.equal(bad.status, 400);
+  const none = await post('/api/mode', {});
+  assert.equal(none.status, 400);
+  const data = await get('/api/info');
+  assert.equal(data.json.source, 'mock');
 });
 
 test('headers: nosniff, no-store, restrictive CSP on API responses, and no x-powered-by', async () => {
