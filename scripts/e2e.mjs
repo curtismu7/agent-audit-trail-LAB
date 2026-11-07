@@ -84,20 +84,22 @@ try {
   await page.waitForFunction(() => document.querySelector('#scenario-select')?.options.length > 0);
   check(await noScroll(), 'no horizontal page scroll at 1280px (Story)');
 
-  // Mock | Live toggle on every tab; Live is refused with an honest message and the page stays mock.
+  // Rule 19 Mock | Real toggle on every tab; this lab is mock only, so Real is disabled with the server's reason and the page stays mock.
   for (const t of TABS) {
     await tab(t);
     const group = page.getByRole('group', { name: 'Mode' });
-    check(await group.isVisible() && (await group.getByRole('button', { name: 'Mock' }).getAttribute('aria-pressed')) === 'true' && (await group.getByRole('button', { name: 'Live' }).getAttribute('aria-pressed')) === 'false', `Mock | Live toggle visible on the ${t} tab, Mock pressed`);
+    check(await group.isVisible() && (await group.getByRole('button', { name: 'Mock' }).getAttribute('aria-pressed')) === 'true' && (await group.getByRole('button', { name: 'Real' }).getAttribute('aria-pressed')) === 'false', `Mock | Real toggle visible on the ${t} tab, Mock pressed`);
   }
   await tab('Story');
-  check(!(await page.getByTestId('live-note').isVisible()), 'no Live message before Live is pressed');
-  await page.getByTestId('mode-live').click();
-  check(/Live mode is not available in this app/.test(await page.getByTestId('live-note').innerText()), 'pressing Live shows the honest refusal');
-  check((await page.getByTestId('mode-live').getAttribute('aria-pressed')) === 'false' && (await page.getByTestId('mode-header').innerText()).includes('mock'), 'the page stays in mock mode after Live is pressed');
+  check(!(await page.getByTestId('live-note').isVisible()), 'no mode message before the toggle is used');
+  check(await page.getByTestId('mode-live').isDisabled() && /Live mode is not available in this app/.test((await page.getByTestId('mode-live').getAttribute('title')) || ''), 'Real is disabled and its tooltip carries the honest refusal');
+  const modeReq = await page.request.post(`http://127.0.0.1:${port}/api/mode`, { data: { source: 'real' }, headers: { origin: `http://127.0.0.1:${port}` } });
+  const modeRes = { status: modeReq.status(), body: await modeReq.json() };
+  check(modeRes.status === 409 && modeRes.body.source === 'mock' && modeRes.body.realAvailable === false, 'POST /api/mode {source:"real"} answers 409 and the server stays mock');
+  check((await page.getByTestId('mode-live').getAttribute('aria-pressed')) === 'false' && (await page.getByTestId('mode-header').innerText()).includes('mock'), 'the page stays in mock mode');
   check(/MOCK mode/.test(await page.getByTestId('sim-banner').innerText()) && (await page.getByTestId('sim-banner').getAttribute('data-state')) === 'mock', 'the banner says MOCK mode');
   await page.getByTestId('mode-mock').click();
-  check(!(await page.getByTestId('live-note').isVisible()), 'pressing Mock clears the message');
+  check((await page.getByTestId('mode-mock').getAttribute('aria-pressed')) === 'true' && !(await page.getByTestId('live-note').isVisible()), 'pressing Mock keeps mock and shows no message');
 
   // The simulation banner is on every tab.
   for (const t of TABS) { await tab(t); check(await page.getByTestId('sim-banner').isVisible() && /SIMULATION/.test(await page.getByTestId('sim-banner').innerText()) && /MOCK mode/.test(await page.getByTestId('sim-banner').innerText()), `simulation banner (with the mode) visible on the ${t} tab`); }
@@ -288,7 +290,7 @@ try {
 
   // Dark theme: every tab.
   await run('two-hop-delegation');
-  await page.getByRole('button', { name: /Switch to dark theme/ }).click();
+  await page.getByTestId('theme').selectOption('dark');
   check((await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark', 'theme toggles to dark');
   let n = 0;
   for (const t of TABS) { await tab(t); n += 1; await sleep(400); await shot(`d${n}-${t.toLowerCase()}-dark`); }
@@ -298,12 +300,12 @@ try {
   // Narrow viewport (375px), both themes, every tab.
   for (const theme of ['dark', 'light']) {
     await page.setViewportSize({ width: 375, height: 800 });
-    if (theme === 'light') await page.getByRole('button', { name: /Switch to light theme/ }).click();
+    if (theme === 'light') await page.getByTestId('theme').selectOption('light');
     await sleep(200);
     for (const t of TABS) {
       await tab(t); await sleep(300);
       check(await noScroll(), `no horizontal page scroll at 375px (${t}, ${theme})`);
-      check(await page.getByTestId('sim-banner').isVisible() && await page.getByRole('group', { name: 'Mode' }).isVisible(), `banner and Mock | Live toggle visible at 375px (${t}, ${theme})`);
+      check(await page.getByTestId('sim-banner').isVisible() && await page.getByRole('group', { name: 'Mode' }).isVisible(), `banner and Mock | Real toggle visible at 375px (${t}, ${theme})`);
     }
     // The Scenario and Cast selects stay inside the picker card (they once ran a few px past its border).
     check(await page.locator('.picker select').evaluateAll((els) => els.every((el) => { const c = el.closest('.card').getBoundingClientRect(); return el.getBoundingClientRect().right <= c.right + 0.5; })), `the Scenario and Cast selects stay inside the card at 375px (${theme})`);
