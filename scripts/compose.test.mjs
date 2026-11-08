@@ -82,3 +82,7 @@ test('the Dockerfile has its own HEALTHCHECK on /api/health, and .dockerignore k
   const ign = fs.readFileSync(new URL('../.dockerignore', import.meta.url), 'utf8').split('\n');
   for (const must of ['node_modules', '.git', '.data', '.env', 'web/dist']) assert.ok(ign.includes(must), `.dockerignore lists ${must}`);
 });
+
+test('compose passes a usable SHELF_URL so the header Shelf button shows in Docker', () => {
+  assert.match(code, /SHELF_URL:\s*\$\{SHELF_URL:-http:\/\/127\.0\.0\.1:4400\}/);
+});

@@ -9,7 +9,7 @@ services:
     ports:
       - "127.0.0.1:${HOST_PORT:-6600}:6600"
     environment:
-      SHELF_URL: ${SHELF_URL:-}
+      SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       AUDIT_TRAIL_PORT: "6600"
       AUDIT_TRAIL_BIND: 0.0.0.0
     read_only: true

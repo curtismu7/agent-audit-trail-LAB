@@ -223,3 +223,16 @@ test('the store cap is a 409, not a crash', async () => {
 test('zero non-loopback connections were attempted by any test above', () => {
   assert.deepEqual(net.attempts, []);
 });
+
+test('GET /api/shelf is reachable without a web build and reads SHELF_URL; POST is refused', async () => {
+  const prev = process.env.SHELF_URL;
+  process.env.SHELF_URL = 'https://shelf.example:8443/';
+  try {
+    const r = await get('/api/shelf');
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.json, { shelfUrl: 'https://shelf.example:8443' });
+    assert.notEqual((await post('/api/shelf', {})).status, 200);
+  } finally {
+    if (prev === undefined) delete process.env.SHELF_URL; else process.env.SHELF_URL = prev;
+  }
+});
