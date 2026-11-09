@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
+// Opened from Customer Agent LAB (UC20 routes here): strip + header Back only; no scenario or vertical is preselected.
+import ReturnLink from "./return-link/ReturnLink.jsx";
 import { workspaceId } from "./lib/api.js";
 import { getDiagram, getEvent, getHealth, getInfo, getJoin, getMode, getScenarios, postMode, postReset, runScenario, searchEvents, verifyChain } from "./lib/api.js";
 import { plural, safe } from "./lib/format.js";
@@ -162,6 +164,7 @@ export default function App() {
         <span>{(info?.banner || FALLBACK_BANNER).replace(/^SIMULATION, MOCK mode:\s*/, "")}</span>{" "}
         <UnverifiedBadge>retention ~{info?.retentionDays ?? 7} days UNVERIFIED</UnverifiedBadge>
       </section>
+      <ReturnLink app="agent-audit-trail" />
       {health?.unreachable && <p className="notice" role="alert">Cannot reach the API. Is the server running?</p>}
       {health && !health.unreachable && health.state !== "ready" && <p className="notice" role="alert">Server health is {health.state}. Run <code>npm run doctor</code>.</p>}
       <header className="top">
@@ -177,6 +180,7 @@ export default function App() {
           {TABS.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
         </nav>
         <div className="tools-right">
+          <ReturnLink app="agent-audit-trail" variant="header" />
             <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
           <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>{presenter ? "Exit presenter mode (Esc)" : "Presenter mode (P)"}</button>
           <button type="button" onClick={() => reset()} aria-disabled={busy ? "true" : undefined}>Reset</button>
