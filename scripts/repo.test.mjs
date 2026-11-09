@@ -62,6 +62,7 @@ test('no k8s manifests, no hosted build, no bare MODE and no per-app .env loader
   assert.doesNotMatch(code, /AUDIT_TRAIL_HOSTED|__SE_HOST__|__IMAGE__|loadEnvFile/);
 });
 
+// local.ping-devops.com is the family lab-proxy's public origin (rulebook: labs are reached at https://local.ping-devops.com:8443).
 test('no shipped text carries a foreign identifier: only .example and .invalid hosts, no tenant-style ids', () => {
   const hits = [];
   for (const f of walk(root)) {
@@ -69,7 +70,7 @@ test('no shipped text carries a foreign identifier: only .example and .invalid h
     const t = fs.readFileSync(f, 'utf8');
     for (const m of t.matchAll(/https?:\/\/([a-z0-9.-]+)/gi)) {
       const host = m[1].toLowerCase().replace(/\.$/, '');
-      if (!(/(^|\.)(example|invalid|localhost)$/.test(host) || host === '127.0.0.1' || ['github.com', 'www.w3.org', 'json-schema.org', 'registry.npmjs.org', 'claude.com', 'react.dev', 'reactjs.org', 'w3.org', 'github.io', 'raw.githubusercontent.com', 'npmjs.org', 'nodejs.org', 'playwright.dev', 'xyflow.com', 'reactflow.dev', 'opensource.org', 'tc39.es', 'spdx.org'].includes(host))) hits.push(`${path.relative(root, f)}: ${host}`);
+      if (!(/(^|\.)(example|invalid|localhost)$/.test(host) || host === '127.0.0.1' || ['github.com', 'www.w3.org', 'json-schema.org', 'registry.npmjs.org', 'claude.com', 'react.dev', 'reactjs.org', 'w3.org', 'github.io', 'raw.githubusercontent.com', 'npmjs.org', 'nodejs.org', 'playwright.dev', 'xyflow.com', 'reactflow.dev', 'opensource.org', 'tc39.es', 'spdx.org', 'local.ping-devops.com'].includes(host))) hits.push(`${path.relative(root, f)}: ${host}`);
     }
     if (/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i.test(t)) hits.push(`${path.relative(root, f)}: uuid-shaped id`);
   }

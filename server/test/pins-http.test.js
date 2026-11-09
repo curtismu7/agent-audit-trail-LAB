@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { credentialGuard, hostGuard, isLoopbackHost, originGuard, parseHost } from '../src/safety.js';
+import { credentialGuard, hostGuard, isLoopbackHost, makeHostGuard, makeOriginGuard, originGuard, parseAllowedHosts, parseHost } from '../src/safety.js';
 import { boot, freeBase, mkRuntime, request } from './helpers.js';
 import { startHttpServer } from '../src/app.js';
 
@@ -237,4 +237,34 @@ test('CUSTOMER CONFIG: bounded plain labels, bad values fall back, the shipped f
   const shipped = loadCustomer(); // reads customer.config.json (git-ignored); the defaults when it is absent
   assert.deepEqual(shipped, normalizeCustomer(shipped));
   assert.deepEqual(loadCustomer('/no/such/file.json'), DEFAULT_CUSTOMER);
+});
+
+// Behind the family lab-proxy (https://local.ping-devops.com:8443): Host is this lab's LAB_ALLOWED_HOSTS name with its port,
+// the browser's Origin is the proxy's, and the proxy says so in X-Forwarded-Host/-Proto.
+test('lab-proxy: LAB_ALLOWED_HOSTS parsing, launcher Host, proxied writes, and what stays refused', () => {
+  assert.deepEqual([...parseAllowedHosts({})], []);
+  assert.deepEqual([...parseAllowedHosts({ LAB_ALLOWED_HOSTS: ' Agent-Audit-Trail-Lab.local.ping-devops.com , ' })], ['agent-audit-trail-lab.local.ping-devops.com']);
+  for (const bad of ['a.example:6600', 'https://a.example', 'a b']) assert.throws(() => parseAllowedHosts({ LAB_ALLOWED_HOSTS: bad }), /not a host name/);
+  const name = 'agent-audit-trail-lab.local.ping-devops.com';
+  const opts = { allowed: parseAllowedHosts({ LAB_ALLOWED_HOSTS: name }), port: 6600 };
+  const hg = makeHostGuard(opts);
+  const og = makeOriginGuard(opts);
+  // launcher Host accepted; loopback still accepted
+  assert.equal(run(hg, { host: `${name}:6600` }, 'GET').next, true);
+  assert.equal(run(hg, { host: '127.0.0.1:6600' }, 'GET').next, true);
+  // a Host outside the set is refused: the bare proxy name, another name, the right name on another port, no port; unset = loopback only
+  for (const host of ['local.ping-devops.com:6600', 'local.ping-devops.com:8443', 'evil.example:6600', `${name}:6601`, name]) assert.equal(run(hg, { host }, 'GET').status, 421, host);
+  assert.equal(run(hostGuard, { host: `${name}:6600` }, 'GET').status, 421);
+  // proxied same-origin write accepted
+  const proxied = { host: `${name}:6600`, 'x-forwarded-host': 'local.ping-devops.com:8443', 'x-forwarded-proto': 'https', 'sec-fetch-site': 'same-origin', 'content-length': '2', 'content-type': 'application/json' };
+  assert.equal(run(og, { ...proxied, origin: 'https://local.ping-devops.com:8443' }).next, true);
+  // foreign Origin refused, and an Origin that does not match the forwarded host or scheme
+  for (const origin of ['https://evil.example', 'http://local.ping-devops.com:8443', 'https://local.ping-devops.com']) assert.equal(run(og, { ...proxied, origin }).status, 403, origin);
+  assert.equal(run(og, { ...proxied, 'x-forwarded-proto': 'ftp', origin: 'ftp://local.ping-devops.com:8443' }).status, 403);
+  assert.equal(run(og, { ...proxied, 'x-forwarded-host': '', origin: 'https://' }).status, 403);
+  // forwarded headers on a loopback Host are ignored
+  assert.equal(run(og, { ...proxied, host: '127.0.0.1:6600', origin: 'https://local.ping-devops.com:8443' }).status, 403);
+  assert.equal(run(og, { ...proxied, host: 'localhost:6600', 'x-forwarded-host': 'evil.example', origin: 'https://evil.example' }).status, 403);
+  // and without LAB_ALLOWED_HOSTS the proxy's origin is never believed
+  assert.equal(run(originGuard, { ...proxied, origin: 'https://local.ping-devops.com:8443' }).status, 403);
 });
