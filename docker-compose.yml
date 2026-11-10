@@ -12,6 +12,8 @@ services:
       SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       AUDIT_TRAIL_PORT: "6600"
       AUDIT_TRAIL_BIND: 0.0.0.0
+      # The name the family lab-proxy (https://local.ping-devops.com:8443) sends in Host; loopback always works.
+      LAB_ALLOWED_HOSTS: ${LAB_ALLOWED_HOSTS:-agent-audit-trail-lab.local.ping-devops.com}
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

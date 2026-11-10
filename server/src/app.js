@@ -15,7 +15,7 @@ import { VERTICALS, createRuntime } from './runtime.js';
 import { DEFAULT_WORKSPACE, WORKSPACE_RE, createWorkspaces } from './workspaces.js';
 import { LIVE_REFUSAL, loadCustomer, modeFrom, normalizeCustomer } from './config.js';
 import { DIAGRAM_NAMES, hasDiagram, rawDiagram } from './diagramData.js';
-import { assertBindAllowed, bindHost, credentialGuard, hostGuard, originGuard, serverPort } from './safety.js';
+import { assertBindAllowed, bindHost, credentialGuard, makeHostGuard, makeOriginGuard, parseAllowedHosts, serverPort } from './safety.js';
 import { getScenario } from './scenarios.js';
 import { MAX_LIMIT, RETENTION_DAYS, UNVERIFIED } from './store.js';
 import { ToolError, TOOLS } from './tools.js';
@@ -47,14 +47,14 @@ function queryArgs(req) {
 }
 const toolStatus = (e) => (e.code === 'not_found' ? 404 : e.code === 'unknown_tool' ? 404 : 400);
 
-export function createApp({ runtime, health = createHealth(), webDist = null, customer = normalizeCustomer(null), createWorkspaceRuntime = () => createRuntime() } = {}) {
+export function createApp({ runtime, health = createHealth(), webDist = null, customer = normalizeCustomer(null), createWorkspaceRuntime = () => createRuntime(), allowedHosts = parseAllowedHosts(), port = serverPort() } = {}) {
   const workspaces = createWorkspaces({ defaultRuntime: runtime, create: createWorkspaceRuntime });
   const app = express();
   app.disable('x-powered-by');
   app.set('query parser', 'simple');
-  app.use(hostGuard);
+  app.use(makeHostGuard({ allowed: allowedHosts, port }));
   app.use(credentialGuard); // every route, static files included
-  app.use(originGuard);
+  app.use(makeOriginGuard({ allowed: allowedHosts, port }));
   app.use((_req, res, next) => { res.set(API_HEADERS); next(); });
   // The workspace this request works in. Static files do not need one, so the lookup is lazy for them.
   app.use((req, res, next) => {
@@ -185,6 +185,7 @@ export function createApp({ runtime, health = createHealth(), webDist = null, cu
 
 // Boot on `port`. Refuses a non-loopback host unless AUDIT_TRAIL_BIND is set.
 export async function startHttpServer({ port = serverPort(), host = bindHost(), env = process.env, runtime, webDist = DEFAULT_WEB_DIST, now } = {}) {
+  const allowedHosts = parseAllowedHosts(env); // the lab-proxy's names; before any server or timer starts
   assertBindAllowed(host, env);
   modeFrom(env); // refuses live (honestly) and anything but mock
   const customer = loadCustomer();
@@ -192,7 +193,7 @@ export async function startHttpServer({ port = serverPort(), host = bindHost(), 
   const rt = runtime || make();
   const health = createHealth({ env });
   return new Promise((resolve, reject) => {
-    const httpServer = createApp({ runtime: rt, health, webDist, customer, createWorkspaceRuntime: make }).listen(port, host);
+    const httpServer = createApp({ runtime: rt, health, webDist, customer, createWorkspaceRuntime: make, allowedHosts, port }).listen(port, host);
     httpServer.once('error', (e) => { health.stop(); reject(e); });
     httpServer.once('listening', () => {
       const { port: bound } = httpServer.address();
