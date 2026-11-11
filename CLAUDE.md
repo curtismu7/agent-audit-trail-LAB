@@ -18,4 +18,4 @@ Who did what through which agent. Seeded synthetic events from six sources -> no
 - The diagram is diagram-studio/1 data (`server/diagrams/audit-flow.json`) loaded by name; never hand-build nodes or edges. Reset restores box positions.
 - UI: `web/src/styles/standalone-ui.css` is vendored byte-for-byte; app CSS uses tokens only (no colour literals, no `prefers-color-scheme`, no `!important`, breakpoints 600/900). Run buttons use `aria-disabled`, not `disabled`. Presenter mode: `P` toggles, Escape leaves, modifier chords ignored; the banner always stays.
 - `X-Workspace-Id` selects an in-memory workspace. Delegation chains that cycle or exceed 8 hops are flagged and shown as a gap. A link made by session id alone is worded as an inference.
-- Commits end with the Co-Authored-By trailer. Never `--no-verify`. Never print the forbidden-strings list.
+- No AI attribution anywhere (owner, 2026-11-07): no Co-Authored-By trailer and no "Generated with" line in commits, PR bodies or files; CI runs `scripts/check-no-ai-attribution.sh`. Never `--no-verify`. Never print the forbidden-strings list.
