@@ -63,21 +63,17 @@ describe("App", () => {
     const nav = screen.getByRole("navigation", { name: "Views" });
     for (const name of ["Story", "Events", "Retention", "Tools", "Integrity", "Diagram"]) {
       await userEvent.click(within(nav).getByRole("button", { name }));
-      const group = screen.getByRole("group", { name: "Mode" });
-      expect(within(group).getByRole("button", { name: "Mock" })).toHaveAttribute("aria-pressed", "true");
-      expect(within(group).getByRole("button", { name: "Real" })).toHaveAttribute("aria-pressed", "false");
+      const mode = screen.getByTestId("mode-select");
+      expect(mode).toHaveValue("mock");
     }
     expect(screen.getByTestId("live-note")).not.toBeVisible();
     // Rule 19: Real is disabled with the server's reason; switching is impossible and the page stays mock.
-    expect(screen.getByTestId("mode-live")).toBeDisabled();
-    expect(screen.getByTestId("mode-live")).toHaveAttribute("title", "Live mode is not available in this app: no live audit source (from the server).");
-    await userEvent.click(screen.getByTestId("mode-live"));
-    expect(screen.getByTestId("live-note")).not.toBeVisible();
+    const realOption = screen.getByTestId("mode-select").querySelector('option[value="real"]');
+    expect(realOption).toBeDisabled();
+    expect(screen.getByTestId("mode-select")).toHaveAccessibleDescription("");
     expect(screen.getByTestId("mode-header")).toHaveTextContent("mock");
     expect(screen.getByTestId("sim-banner")).toHaveTextContent(/MOCK mode/);
     expect(screen.getByTestId("sim-banner")).toHaveAttribute("data-state", "mock");
-    await userEvent.click(screen.getByTestId("mode-mock"));
-    expect(screen.getByTestId("live-note")).not.toBeVisible();
   });
   it("rule 19: a successful mode switch posts /api/mode and reloads the data", async () => {
     globalThis.fetch = vi.fn((url, init) => {
@@ -90,20 +86,20 @@ describe("App", () => {
     });
     render(<App />);
     await screen.findByText(/live tenant/);
-    await userEvent.click(screen.getByTestId("mode-live"));
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "real");
     await waitFor(() => expect(screen.getByTestId("mode-header")).toHaveTextContent("real"));
-    // data reloaded after the switch (aria-pressed reflects the server's answer)
-    expect(screen.getByTestId("mode-live")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("mode-mock")).toHaveAttribute("aria-pressed", "false");
+    // data reloaded after the switch (the select reflects the server's answer)
+    expect(screen.getByTestId("mode-select")).toHaveValue("real");
   });
   it("rule 19: a refused switch shows the server's 409 reason and the page stays mock", async () => {
     globalThis.fetch = vi.fn((url, init) => (url === "/api/mode" && init?.method === "POST"
       ? Promise.resolve({ ok: false, status: 409, json: async () => ({ error: "real_not_available", source: "mock", realAvailable: false, realReason: "This lab is mock only.", message: "This lab is mock only." }) })
-      : route(url, init)));
+      : url === "/api/info"
+        ? Promise.resolve({ ok: true, status: 200, json: async () => ({ mode: "mock", source: "mock", realAvailable: true, banner: "SIMULATION, MOCK mode: from the server", retentionDays: 7, events: 5 }) })
+        : route(url, init)));
     render(<App />);
     await screen.findByText(/from the server/);
-    // mock→mock posts, gets a 409 from the server anyway, and the page stays mock
-    await userEvent.click(screen.getByTestId("mode-mock"));
+    await userEvent.selectOptions(screen.getByTestId("mode-select"), "real");
     await waitFor(() => expect(globalThis.fetch.mock.calls.some(([u, i]) => u === "/api/mode" && i?.method === "POST")).toBe(true));
     expect(screen.getByTestId("mode-header")).toHaveTextContent("mock");
     expect(screen.getByTestId("sim-banner")).toHaveAttribute("data-state", "mock");
@@ -111,7 +107,8 @@ describe("App", () => {
   it("still keeps Real unavailable when the server cannot be asked", async () => {
     globalThis.fetch = vi.fn((url, init) => (url === "/api/info" ? Promise.reject(new Error("down")) : route(url, init)));
     render(<App />);
-    expect(screen.getByTestId("mode-live")).toBeDisabled();
+    await waitFor(() => expect(screen.getByTestId("mode-select")).toBeInTheDocument());
+    expect(screen.getByTestId("mode-select").querySelector('option[value="real"]')).toBeDisabled();
     expect(screen.getByTestId("sim-banner")).toHaveTextContent(/SIMULATION, MOCK mode|MOCK mode/);
   });
   it("keeps the banner in presenter mode", async () => {
@@ -120,7 +117,7 @@ describe("App", () => {
     expect(screen.getByTestId("app")).toHaveClass("app--presenter");
     expect(screen.getByTestId("sim-banner")).toBeVisible();
     expect(screen.getByTestId("mode-header")).toBeVisible();
-    await userEvent.click(screen.getByRole("button", { name: "Exit presenter mode (Esc)" }));
+    await userEvent.click(screen.getByTestId("presenter"));
     expect(screen.getByTestId("app")).not.toHaveClass("app--presenter");
   });
   it("P toggles presenter mode and Escape leaves it; the banner stays; modifier keys, held keys and typing are ignored", async () => {

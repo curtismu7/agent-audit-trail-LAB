@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
+import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 // Opened from Customer Agent LAB (UC20 routes here): strip + header Back only; no scenario or vertical is preselected.
 import ReturnLink from "./return-link/ReturnLink.jsx";
 import { workspaceId } from "./lib/api.js";
@@ -19,6 +20,7 @@ const initialTheme = () => {
   const t = safe(() => localStorage.getItem("aat-theme"), null);
   return ["auto", "light", "dark"].includes(t) ? t : "auto";
 };
+const initialFont = () => { const f = safe(() => localStorage.getItem("aat.font"), null); return ["S", "M", "L"].includes(f) ? f : "M"; };
 const FALLBACK_BANNER = "SIMULATION, MOCK mode: every event here is synthetic and seeded. No tenant, no network, no credentials. Tokens shown are mock-issued claims.";
 const FALLBACK_LIVE_REFUSAL = "Live mode is not available in this app: it has no live audit source to connect to, and everything shown is a seeded mock. The page stays in mock mode.";
 const TABS = [["story", "Story"], ["events", "Events"], ["retention", "Retention"], ["tools", "Tools"], ["integrity", "Integrity"], ["diagram", "Diagram"]];
@@ -26,6 +28,7 @@ const isTyping = (t) => !!t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t
 
 export default function App() {
   const [theme, setTheme] = useState(initialTheme);
+  const [fontStep, setFontStep] = useState(initialFont);
   const [presenter, setPresenter] = useState(false);
   const [tab, setTab] = useState("story");
   const [info, setInfo] = useState(null);
@@ -59,6 +62,11 @@ export default function App() {
     else document.documentElement.setAttribute("data-theme", theme);
     safe(() => localStorage.setItem("aat-theme", theme));
   }, [theme]);
+
+  useEffect(() => {
+    applyFontSize(fontStep);
+    safe(() => localStorage.setItem("aat.font", fontStep));
+  }, [fontStep]);
 
   // Presenter mode: P toggles, Escape leaves. Keys typed into a field, held keys and any chord with Ctrl, Meta or Alt are ignored.
   useEffect(() => {
@@ -170,27 +178,24 @@ export default function App() {
       <header className="top">
         <h1>{info?.customer?.brand?.title ?? "Agent Audit Trail"}</h1>
         <span className="chip chip--demo" data-testid="mode-badge">DEMO<span className="sr-only">: seeded synthetic events, nothing real</span></span>
-        <div className="seg" role="group" aria-label="Mode">
-          <button type="button" aria-pressed={source === "mock"} onClick={() => switchMode("mock")} data-testid="mode-mock">Mock</button>
-          {/* Rule 19: Real shows the server's reason in its tooltip when this mock-only lab cannot go live. */}
-          <button type="button" aria-pressed={source === "real"} disabled={!realAvailable} title={realAvailable ? undefined : realReason} onClick={() => switchMode("real")} data-testid="mode-live">Real</button>
-        </div>
         <span className="chip" data-testid="mode-header">mode: {info?.mode ?? "mock"}</span>
         <nav aria-label="Views" className="tabs">
           {TABS.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
         </nav>
         <div className="tools-right">
-          <ReturnLink app="agent-audit-trail" variant="header" />
+          <TopMenu
+            mode={{ value: source === "real" ? "real" : "mock", onChange: switchMode, realAvailable, realHint: realReason }}
+            vertical={{ value: info?.vertical ?? "retail", onChange: (v) => reset(v), options: info?.verticals ?? ["retail"] }}
+            theme={{ value: theme, onChange: setThemePersist }}
+            fontSize={{ value: fontStep, onChange: setFontStep }}
+            present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
+            help={{ href: "https://github.com/curtismu7/agent-audit-trail-LAB#readme" }}
+            version={info?.version || null}
+            onReset={() => reset()}
+          >
             <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
-          <button type="button" aria-pressed={presenter} onClick={() => setPresenter((p) => !p)}>{presenter ? "Exit presenter mode (Esc)" : "Presenter mode (P)"}</button>
-          <button type="button" onClick={() => reset()} aria-disabled={busy ? "true" : undefined}>Reset</button>
-          <label className="inline">Theme
-            <select value={theme} onChange={(e) => setThemePersist(e.target.value)} data-testid="theme">
-              <option value="auto">Auto</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </label>
+          </TopMenu>
+          <ReturnLink app="agent-audit-trail" variant="header" />
         </div>
       </header>
       <main id="main" tabIndex={-1} className="page">

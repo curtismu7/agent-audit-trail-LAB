@@ -21,6 +21,8 @@ import { MAX_LIMIT, RETENTION_DAYS, UNVERIFIED } from './store.js';
 import { ToolError, TOOLS } from './tools.js';
 import { shelfInfo } from './shelfLink.js';
 
+const APP_VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version || null; } catch { return null; } })();
+
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const bad = (res, message, status = 400) => res.status(status).json({ error: status === 404 ? 'not_found' : 'bad_request', message });
 export const DEFAULT_WEB_DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../web/dist');
@@ -86,6 +88,7 @@ export function createApp({ runtime, health = createHealth(), webDist = null, cu
     banner: 'SIMULATION, MOCK mode: every event here is synthetic and seeded. No tenant, no network, no credentials. Tokens shown are mock-issued claims.',
     retentionDays: RETENTION_DAYS, retentionProvenance: UNVERIFIED, maxLimit: MAX_LIMIT,
     events: req.rt.store.size, epoch: req.rt.epoch, tamperKinds: TAMPER_KINDS,
+    version: APP_VERSION,
   })).all(methods('GET'));
 
   // Rule 19: runtime mode is server-side. This lab is mock only, so mock→real is refused 409 and real→mock is a no-op.
