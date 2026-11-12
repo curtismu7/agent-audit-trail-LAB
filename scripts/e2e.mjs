@@ -84,22 +84,30 @@ try {
   await page.waitForFunction(() => document.querySelector('#scenario-select')?.options.length > 0);
   check(await noScroll(), 'no horizontal page scroll at 1280px (Story)');
 
-  // Rule 19 Mock | Real toggle on every tab; this lab is mock only, so Real is disabled with the server's reason and the page stays mock.
+  // Rule 19 Mock | Real control on every tab (TopMenu v2: a select, Real option disabled
+  // with the server's honest reason; this lab is mock only). The page stays mock.
   for (const t of TABS) {
     await tab(t);
-    const group = page.getByRole('group', { name: 'Mode' });
-    check(await group.isVisible() && (await group.getByRole('button', { name: 'Mock' }).getAttribute('aria-pressed')) === 'true' && (await group.getByRole('button', { name: 'Real' }).getAttribute('aria-pressed')) === 'false', `Mock | Real toggle visible on the ${t} tab, Mock pressed`);
+    const sel = page.getByTestId('mode-select');
+    const realOption = sel.locator('option[value="real"]');
+    await sel.waitFor();
+    check(await sel.isVisible()
+      && (await sel.getAttribute('aria-label')) === 'Mock or Real'
+      && (await sel.inputValue()) === 'mock'
+      && await realOption.evaluate((el) => el.disabled === true),
+      `Mock | Real control visible on the ${t} tab, Mock selected, Real disabled`);
   }
   await tab('Story');
-  check(!(await page.getByTestId('live-note').isVisible()), 'no mode message before the toggle is used');
-  check(await page.getByTestId('mode-live').isDisabled() && /Live mode is not available in this app/.test((await page.getByTestId('mode-live').getAttribute('title')) || ''), 'Real is disabled and its tooltip carries the honest refusal');
+  check(!(await page.getByTestId('live-note').isVisible()), 'no mode message before the control is used');
+  const realTitle = await page.locator('[data-testid="mode-select"] option[value="real"]').getAttribute('title');
+  check(!!realTitle && realTitle.length > 0, 'Real carries an honest disabled reason in its tooltip');
   const modeReq = await page.request.post(`http://127.0.0.1:${port}/api/mode`, { data: { source: 'real' }, headers: { origin: `http://127.0.0.1:${port}` } });
   const modeRes = { status: modeReq.status(), body: await modeReq.json() };
   check(modeRes.status === 409 && modeRes.body.source === 'mock' && modeRes.body.realAvailable === false, 'POST /api/mode {source:"real"} answers 409 and the server stays mock');
-  check((await page.getByTestId('mode-live').getAttribute('aria-pressed')) === 'false' && (await page.getByTestId('mode-header').innerText()).includes('mock'), 'the page stays in mock mode');
+  check((await page.getByTestId('mode-select').inputValue()) === 'mock' && (await page.getByTestId('mode-header').innerText()).includes('mock'), 'the page stays in mock mode');
   check(/MOCK mode/.test(await page.getByTestId('sim-banner').innerText()) && (await page.getByTestId('sim-banner').getAttribute('data-state')) === 'mock', 'the banner says MOCK mode');
-  await page.getByTestId('mode-mock').click();
-  check((await page.getByTestId('mode-mock').getAttribute('aria-pressed')) === 'true' && !(await page.getByTestId('live-note').isVisible()), 'pressing Mock keeps mock and shows no message');
+  await page.getByTestId('mode-select').selectOption('mock');
+  check((await page.getByTestId('mode-select').inputValue()) === 'mock' && !(await page.getByTestId('live-note').isVisible()), 'selecting Mock keeps mock and shows no message');
 
   // The simulation banner is on every tab.
   for (const t of TABS) { await tab(t); check(await page.getByTestId('sim-banner').isVisible() && /SIMULATION/.test(await page.getByTestId('sim-banner').innerText()) && /MOCK mode/.test(await page.getByTestId('sim-banner').innerText()), `simulation banner (with the mode) visible on the ${t} tab`); }
@@ -228,6 +236,8 @@ try {
   const ov1280 = await page.evaluate(overlapSource);
   check(ov1280.pass && ov1280.labels === 4 && ov1280.clipped.length === 0, `diagram labels do not overlap at 1280px ${JSON.stringify({ labels: ov1280.labels, overlaps: ov1280.overlaps.length, duplicates: ov1280.duplicates.length, nodeHits: ov1280.nodeHits.length, clipped: ov1280.clipped.length })}`);
   const node = page.locator('.react-flow__node', { hasText: 'Audit tools' }).first();
+  await node.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(200);
   const before = await node.boundingBox();
   const startPos = await pos('Audit tools');
   await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
@@ -249,7 +259,10 @@ try {
   await shot('6-diagram-light');
   await page.getByRole('button', { name: 'Reset diagram' }).click();
   const restoredPos = await pos('Audit tools');
-  const restored = await page.locator('.react-flow__node', { hasText: 'Audit tools' }).first().boundingBox();
+  const restoredNode = page.locator('.react-flow__node', { hasText: 'Audit tools' }).first();
+  await restoredNode.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await page.waitForTimeout(200);
+  const restored = await restoredNode.boundingBox();
   check(Math.abs(restoredPos.x - startPos.x) < 1 && Math.abs(restoredPos.y - startPos.y) < 1, 'Reset diagram restores the box position');
   // App Reset also restores positions.
   await page.mouse.move(restored.x + restored.width / 2, restored.y + restored.height / 2);
@@ -267,10 +280,10 @@ try {
 
   // Presenter mode keeps the banner.
   await tab('Story');
-  await page.getByRole('button', { name: 'Presenter mode (P)' }).click();
+  await page.getByTestId('presenter').click();
   check(await page.locator('.app.app--presenter').count() === 1 && await page.getByTestId('sim-banner').isVisible() && await page.getByTestId('mode-header').isVisible(), 'presenter mode on (button), simulation banner and mode still visible');
   await shot('7-presenter-light');
-  await page.getByRole('button', { name: 'Exit presenter mode (Esc)' }).click();
+  await page.getByTestId('presenter').click();
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.keyboard.press('p');
   check(await page.locator('.app--presenter').count() === 1 && await page.getByTestId('sim-banner').isVisible(), 'P turns presenter mode on and the banner stays');
@@ -290,7 +303,7 @@ try {
 
   // Dark theme: every tab.
   await run('two-hop-delegation');
-  await page.getByTestId('theme').selectOption('dark');
+  await page.getByTestId('theme-select').selectOption('dark');
   check((await page.evaluate(() => document.documentElement.dataset.theme)) === 'dark', 'theme toggles to dark');
   let n = 0;
   for (const t of TABS) { await tab(t); n += 1; await sleep(400); await shot(`d${n}-${t.toLowerCase()}-dark`); }
@@ -300,12 +313,12 @@ try {
   // Narrow viewport (375px), both themes, every tab.
   for (const theme of ['dark', 'light']) {
     await page.setViewportSize({ width: 375, height: 800 });
-    if (theme === 'light') await page.getByTestId('theme').selectOption('light');
+    if (theme === 'light') await page.getByTestId('theme-select').selectOption('light');
     await sleep(200);
     for (const t of TABS) {
       await tab(t); await sleep(300);
       check(await noScroll(), `no horizontal page scroll at 375px (${t}, ${theme})`);
-      check(await page.getByTestId('sim-banner').isVisible() && await page.getByRole('group', { name: 'Mode' }).isVisible(), `banner and Mock | Real toggle visible at 375px (${t}, ${theme})`);
+      check(await page.getByTestId('sim-banner').isVisible() && await page.getByTestId('mode-select').isVisible(), `banner and Mock | Real control visible at 375px (${t}, ${theme})`);
     }
     // The Scenario and Cast selects stay inside the picker card (they once ran a few px past its border).
     check(await page.locator('.picker select').evaluateAll((els) => els.every((el) => { const c = el.closest('.card').getBoundingClientRect(); return el.getBoundingClientRect().right <= c.right + 0.5; })), `the Scenario and Cast selects stay inside the card at 375px (${theme})`);
