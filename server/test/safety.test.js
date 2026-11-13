@@ -34,9 +34,9 @@ test('doctor passes here, and fails when the port is outside the range or the bi
 });
 
 test('health reports demo-health/1 and degrades to broken when a check fails', () => {
-  const ok = createHealth({ runChecks: () => [{ id: 'x', level: 'pass', detail: '' }], intervalMs: 1e9 });
-  const broken = createHealth({ runChecks: () => [{ id: 'x', level: 'fail', detail: '' }], intervalMs: 1e9 });
-  const throwing = createHealth({ runChecks: () => { throw new Error('boom'); }, intervalMs: 1e9 });
+  const ok = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: () => [{ id: 'x', level: 'pass', detail: '' }], allPassed: (cs) => (cs || []).every((x) => x?.level !== 'fail'), intervalMs: 1e9 });
+  const broken = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: () => [{ id: 'x', level: 'fail', detail: '' }], allPassed: (cs) => (cs || []).every((x) => x?.level !== 'fail'), intervalMs: 1e9 });
+  const throwing = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: () => { throw new Error('boom'); }, allPassed: (cs) => (cs || []).every((x) => x?.level !== 'fail'), intervalMs: 1e9 });
   const get = (h) => new Promise((resolve) => { h.router.handle({ method: 'GET', url: '/', headers: {} }, { set() {}, json: resolve }, () => {}); });
   return Promise.all([get(ok), get(broken), get(throwing)]).then(([a, b, c]) => {
     assert.equal(a.schema, 'demo-health/1'); assert.equal(a.state, 'ready'); assert.equal(a.runtime, 'offline'); assert.equal(a.demo.id, 'agent-audit-trail-lab');

@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TAMPER_KINDS } from './chain.js';
 import { createHealth } from './health.js';
+import { allPassed, runChecks as defaultChecks } from './doctor.js';
 import { createMcpRouter } from './mcp.js';
 import { VERTICALS, createRuntime } from './runtime.js';
 import { DEFAULT_WORKSPACE, WORKSPACE_RE, createWorkspaces } from './workspaces.js';
@@ -49,7 +50,7 @@ function queryArgs(req) {
 }
 const toolStatus = (e) => (e.code === 'not_found' ? 404 : e.code === 'unknown_tool' ? 404 : 400);
 
-export function createApp({ runtime, health = createHealth(), webDist = null, customer = normalizeCustomer(null), createWorkspaceRuntime = () => createRuntime(), allowedHosts = parseAllowedHosts(), port = serverPort() } = {}) {
+export function createApp({ runtime, health = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: (a) => defaultChecks(a), allPassed }), webDist = null, customer = normalizeCustomer(null), createWorkspaceRuntime = () => createRuntime(), allowedHosts = parseAllowedHosts(), port = serverPort() } = {}) {
   const workspaces = createWorkspaces({ defaultRuntime: runtime, create: createWorkspaceRuntime });
   const app = express();
   app.disable('x-powered-by');
@@ -194,7 +195,7 @@ export async function startHttpServer({ port = serverPort(), host = bindHost(), 
   const customer = loadCustomer();
   const make = () => createRuntime({ ...(now ? { now } : {}), vertical: customer.vertical });
   const rt = runtime || make();
-  const health = createHealth({ env });
+  const health = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: defaultChecks, allPassed, env });
   return new Promise((resolve, reject) => {
     const httpServer = createApp({ runtime: rt, health, webDist, customer, createWorkspaceRuntime: make, allowedHosts, port }).listen(port, host);
     httpServer.once('error', (e) => { health.stop(); reject(e); });

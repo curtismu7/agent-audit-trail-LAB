@@ -9,7 +9,7 @@ import { freeBase, mkRuntime, request } from './helpers.js';
 
 async function boot(t, webDist) {
   const port = await freeBase('spare', 1);
-  const health = createHealth();
+  const health = createHealth({ demoId: 'agent-audit-trail-lab', demoName: 'Agent Audit Trail LAB', version: '0.1.0', runChecks: () => [{ id: 'x', level: 'pass', detail: '' }], allPassed: (cs) => (cs || []).every((x) => x?.level !== 'fail') });
   const server = createApp({ runtime: mkRuntime(), health, webDist }).listen(port, '127.0.0.1');
   await new Promise((r) => server.once('listening', r));
   t.after(async () => { health.stop(); server.closeAllConnections(); await new Promise((r) => server.close(r)); });
