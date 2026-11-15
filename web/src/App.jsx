@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ShelfLink from "./components/ShelfLink.jsx";
+import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 // Opened from Customer Agent LAB (UC20 routes here): strip + header Back only; no scenario or vertical is preselected.
 import ReturnLink from "./return-link/ReturnLink.jsx";
@@ -194,6 +195,7 @@ export default function App() {
             onReset={() => reset()}
           >
             <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
+            <VerifyMark id="agent-audit-trail-lab" headers={() => ({ "X-Workspace-Id": workspaceId() })} />
           </TopMenu>
           <ReturnLink app="agent-audit-trail" variant="header" />
         </div>
