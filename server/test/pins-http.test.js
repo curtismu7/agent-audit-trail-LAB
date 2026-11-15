@@ -211,12 +211,12 @@ test('WORKSPACES: capped, the default is never evicted, the least recently used 
 
 test('MODE: only mock exists; live is refused with an honest message and the server will not start; a bare MODE is never read', async () => {
   assert.equal(modeFrom({}), 'mock'); assert.equal(modeFrom({ AAT_LAB_MODE: 'mock' }), 'mock');
-  assert.throws(() => modeFrom({ AAT_LAB_MODE: 'live' }), /Live mode is not available in this app/);
+  assert.throws(() => modeFrom({ AAT_LAB_MODE: 'live' }), /mock mode only|not configured/);
   for (const m of ['Mock', 'production', '1']) assert.throws(() => modeFrom({ AAT_LAB_MODE: m }), /mock mode only/, m);
   assert.equal(modeFrom({ MODE: 'live' }), 'mock', 'another app\'s MODE in the shared settings file must not switch this one');
   const freePort = await freeBase('guards', 1);
   let leaked = null; // if the mode check were missing the server would start: close it so a failing run cannot hang
-  try { await assert.rejects(async () => { leaked = await startHttpServer({ port: freePort, env: { AAT_LAB_MODE: 'live' }, runtime: mkRuntime(), webDist: null }); }, /Live mode is not available/); } finally { await leaked?.close(); }
+  try { await assert.rejects(async () => { leaked = await startHttpServer({ port: freePort, env: { AAT_LAB_MODE: 'live' }, runtime: mkRuntime(), webDist: null }); }, /mock mode only|not configured/); } finally { await leaked?.close(); }
   assert.equal(allPassed(runChecks({ env: { AAT_LAB_MODE: 'live' } })), false);
   const port = await freeBase('guards', 1);
   const srv = await startHttpServer({ port, host: '127.0.0.1', env: {}, runtime: mkRuntime(), webDist: null });

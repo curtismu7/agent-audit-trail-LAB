@@ -20,7 +20,7 @@ test('info states the simulation, the retention provenance and the cap', async (
   const r = await get('/api/info');
   assert.equal(r.json.mode, 'mock'); assert.equal(r.json.simulated, true);
   // Rule 19: the mode view the toggle reads.
-  assert.equal(r.json.source, 'mock'); assert.equal(r.json.realAvailable, false); assert.match(r.json.realReason, /mock only|not available/i);
+  assert.equal(r.json.source, 'mock'); assert.equal(r.json.realAvailable, Boolean(process.env.AAT_GW_URL)); assert.match(r.json.realReason, /not configured/i);
   assert.match(r.json.banner, /SIMULATION/); assert.match(r.json.retentionProvenance, /UNVERIFIED/); assert.equal(r.json.retentionDays, 7);
 });
 
@@ -29,7 +29,7 @@ test('rule 19: POST /api/mode takes exactly {source}, refuses mock→real with 4
   assert.equal(refused.status, 409);
   assert.equal(refused.json.error, 'real_not_available');
   assert.equal(refused.json.realAvailable, false);
-  assert.match(refused.json.realReason, /not available|mock/i);
+  assert.match(refused.json.realReason, /not configured/i);
   assert.equal(refused.json.source, 'mock');
   const stay = await post('/api/mode', { source: 'mock' });
   assert.equal(stay.status, 200);

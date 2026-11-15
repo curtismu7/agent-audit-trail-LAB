@@ -16,7 +16,7 @@ export const DEFAULT_CUSTOMER = Object.freeze({
 // honest refusal, never a silent fallback. A bare MODE is NOT read: the shared settings file is read by every standalone app, and another
 // app's MODE must not switch this one.
 export const MODES = ['mock', 'live'];
-export const LIVE_REFUSAL = 'Live mode is not available in this app: it has no live audit source to connect to, and everything shown is a seeded mock. The page stays in mock mode.';
+export const LIVE_REFUSAL = 'Real is not configured: set AAT_GW_URL, AAT_GW_APPS and at least one AAT_GW_KEY_<NAME> in the shared settings file (~/Development/.env, or STANDALONE_ENV). Mock keeps working.';
 export function modeFrom(env = process.env) {
   const raw = env.AAT_LAB_MODE;
   const m = raw === undefined || raw === '' ? 'mock' : raw;

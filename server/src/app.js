@@ -15,6 +15,19 @@ import { createMcpRouter } from './mcp.js';
 import { VERTICALS, createRuntime } from './runtime.js';
 import { DEFAULT_WORKSPACE, WORKSPACE_RE, createWorkspaces } from './workspaces.js';
 import { LIVE_REFUSAL, loadCustomer, modeFrom, normalizeCustomer } from './config.js';
+import { readFileSettings, doorConfig, createRealDoor } from './gatewayReal.js';
+import { setAllowedOrigins } from './netguard.js';
+
+// Real mode = the shared gateway hop: an agent key from the shared settings file calling a live Privilege door.
+// The environment wins over the file (the family rule): AAT_* variables overlay the parsed file text.
+export function realDoorFrom(env = process.env) {
+  const p = env.STANDALONE_ENV || `${env.HOME || ''}/Development/.env`;
+  let text = '';
+  try { text = fs.readFileSync(p, 'utf8'); } catch { /* the environment may still carry the keys */ }
+  for (const [k, v] of Object.entries(env)) if (k.startsWith('AAT_GW_') && v) text += `\n${k}=${v}`;
+  const cfg = doorConfig(text, 'AAT');
+  return cfg.ok ? createRealDoor({ config: cfg, clientInfo: { name: 'agent-audit-trail-lab', version: '0.1.0' } }) : null;
+}
 import { DIAGRAM_NAMES, hasDiagram, rawDiagram } from './diagramData.js';
 import { assertBindAllowed, bindHost, credentialGuard, makeHostGuard, makeOriginGuard, parseAllowedHosts, serverPort } from './safety.js';
 import { getScenario } from './scenarios.js';
@@ -84,7 +97,7 @@ export function createApp({ runtime, health = createHealth({ demoId: 'agent-audi
   api.route('/info').get((req, res) => res.json({
     mode: req.rt.mode, modes: { mock: true, live: false }, liveRefusal: LIVE_REFUSAL, simulated: true, workspace: req.workspaceId, customer,
     // Rule 19: what the Mock/Real toggle needs. This lab is mock only, so Real is never available.
-    source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL,
+    source: 'mock', realAvailable: Boolean(realDoorFrom(process.env)), realReason: LIVE_REFUSAL,
     vertical: req.rt.vertical, verticals: VERTICALS,
     banner: 'SIMULATION, MOCK mode: every event here is synthetic and seeded. No tenant, no network, no credentials. Tokens shown are mock-issued claims.',
     retentionDays: RETENTION_DAYS, retentionProvenance: UNVERIFIED, maxLimit: MAX_LIMIT,
@@ -96,8 +109,28 @@ export function createApp({ runtime, health = createHealth({ demoId: 'agent-audi
   api.route('/mode').post((req, res) => {
     const next = req.body?.source;
     if (next !== 'mock' && next !== 'real') return bad(res, 'source must be exactly "mock" or "real"');
-    if (next === 'real') return res.status(409).json({ error: 'real_not_available', source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL, message: LIVE_REFUSAL });
-    return res.json({ source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL, message: 'This lab is mock only; the page stays in mock mode.' });
+    if (next === 'real') {
+      const door = realDoorFrom(process.env);
+      if (!door) return res.status(409).json({ error: 'real_not_available', source: 'mock', realAvailable: false, realReason: LIVE_REFUSAL, message: LIVE_REFUSAL });
+      setAllowedOrigins([door.origin]);
+      return res.json({ source: 'real', realAvailable: true, doors: door.apps, gateway: door.origin });
+    }
+    return res.json({ source: 'mock', realAvailable: Boolean(realDoorFrom(process.env)), realReason: null, message: 'Back in mock.' });
+  }).all(methods('POST'));
+
+  // One real gateway check: tools/list through the door with the agent key, then the gateway's refusal
+  // for a tool nothing grants. The gateway's own words come back unaltered (keys scrubbed).
+  api.route('/gateway-check').post(async (req, res) => {
+    const door = realDoorFrom(process.env);
+    if (!door) return res.status(409).json({ error: 'real_not_available', realReason: LIVE_REFUSAL });
+    if (req.body && Object.keys(req.body).some((k) => !['app', 'caller'].includes(k))) return bad(res, 'the only accepted body fields are { "app", "caller" }');
+    const app = String(req.body?.app || door.apps[0]);
+    if (!door.apps.includes(app)) return bad(res, `app must be one of ${door.apps.join(', ')}`);
+    const caller = req.body?.caller && door.callers.some((c) => c.id === req.body.caller) ? req.body.caller : door.callers[0].id;
+    const listing = await door.list(app, caller);
+    const out = { app, caller, gateway: door.origin, ...(door.version ? { version: door.version } : {}), listing };
+    if (listing.ok) out.refusal = await door.call(app, caller, 'agent_audit_refusal_probe_tool', {});
+    res.json(out);
   }).all(methods('POST'));
 
   // Diagrams are diagram-studio/1 data, loaded by name (rule 17).
