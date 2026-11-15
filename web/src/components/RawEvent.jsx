@@ -1,9 +1,9 @@
 import React from "react";
-import { pretty } from "../lib/format.js";
+import { JSON_HOT } from "../lib/format.js";
 import { Decision, MockTokenBadge } from "./Badges.jsx";
-import { Untrusted } from "./Untrusted.jsx";
+import { Json } from "./JsonPane.jsx";
 
-// Raw viewer: the normalized envelope next to the source's own raw shape, both as inert text. Token claims are
+// Raw viewer: the normalized envelope next to the source's own raw shape, both through the shared JsonPane (Form | JSON, never markup). Token claims are
 // shown whole on purpose (they are mock-issued); the badge says so.
 export default function RawEvent({ event, error, headingRef, onJoin, onClose }) {
   if (error) return <aside className="card" aria-label="Raw event"><p className="alert" role="alert">{error}</p></aside>;
@@ -27,9 +27,9 @@ export default function RawEvent({ event, error, headingRef, onJoin, onClose }) 
         <button type="button" onClick={() => onJoin(event)}>{event.traceId ? "Join by trace id" : "Join this event"}</button>
       </div>
       <h4>Normalized envelope</h4>
-      <Untrusted block text={pretty(envelope)} />
+      <Json value={envelope} label="Normalized envelope" testId="raw-envelope" hot={JSON_HOT} />
       <h4>Source raw record</h4>
-      <Untrusted block text={pretty(raw)} />
+      <Json value={raw} label="Source raw record" testId="raw-record" hot={JSON_HOT} />
     </aside>
   );
 }

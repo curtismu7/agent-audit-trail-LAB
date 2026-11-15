@@ -182,7 +182,9 @@ try {
   await page.getByTestId('event-row').first().waitFor();
   await page.getByTestId('event-row').first().getByRole('button').click();
   await page.getByTestId('raw-event').waitFor();
-  check(await page.getByTestId('raw-event').locator('pre').count() === 2, 'raw viewer shows the envelope and the source record');
+  check(await page.getByTestId('raw-envelope').count() === 1 && await page.getByTestId('raw-record').count() === 1, 'raw viewer shows the envelope and the source record (JsonPane)');
+  await page.getByTestId('raw-event').getByRole('button', { name: 'JSON', exact: true }).first().click();
+  check(await page.getByTestId('raw-event').locator('pre.json').count() === 2, 'the JSON view shows the envelope and the source record as JSON text');
   await page.getByRole('button', { name: /^Join/ }).click();
   await page.getByTestId('who').waitFor();
   check(await page.getByRole('button', { name: 'Story', exact: true }).getAttribute('aria-pressed') === 'true', 'Join from a raw event opens the story tab');
@@ -213,6 +215,7 @@ try {
   check(!names.some((n) => /write|delete|reset|update|create/.test(n)), `no write tool in the list (${names.join(', ')})`);
   await page.getByRole('button', { name: 'Call tool' }).click();
   await page.getByTestId('rpc-result').waitFor();
+  await page.getByTestId('rpc-result').getByRole('button', { name: 'JSON', exact: true }).first().click();
   check(/"jsonrpc": "2.0"/.test(await page.getByTestId('rpc-result').innerText()), 'a tools/call shows the JSON-RPC request and response');
   check(/clamped/.test(await page.getByTestId('rpc-result').innerText()), 'the call asked for 30 days and the response says clamped');
   await shot('4-tools-light');

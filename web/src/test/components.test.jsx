@@ -1,9 +1,11 @@
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it } from "vitest";
 import RawEvent from "../components/RawEvent.jsx";
 import WhoPanel from "../components/WhoPanel.jsx";
 import { Untrusted } from "../components/Untrusted.jsx";
+import { setJsonView } from "../components/JsonPane.jsx";
 import { describeSteps, focusOf } from "../components/Flow.jsx";
 import { nameOf } from "../lib/format.js";
 import { reveal } from "../lib/reveal.js";
@@ -69,11 +71,31 @@ describe("who did what panel", () => {
 });
 
 describe("raw event viewer", () => {
+  beforeEach(() => setJsonView("form")); // the Form | JSON choice is module state shared by every pane
   it("labels token events MOCK-ISSUED and shows both the envelope and the raw record", () => {
     render(<RawEvent event={{ id: "ev-9", source: "token", type: "token.issued", decision: null, flags: [], traceparent: null, raw: { a: 1 } }} onJoin={noop} onClose={noop} />);
     expect(screen.getByText("MOCK-ISSUED")).toBeInTheDocument();
     expect(screen.getByText("no valid traceparent")).toBeInTheDocument();
-    expect(screen.getAllByTestId("untrusted")).toHaveLength(2);
+    expect(screen.getByTestId("raw-envelope")).toBeInTheDocument();
+    expect(screen.getByTestId("raw-record")).toBeInTheDocument();
+  });
+  it("shows both records through the shared JsonPane: Form first, the exact JSON text after the JSON button, nothing capped", async () => {
+    render(<RawEvent event={{ id: "ev-9", source: "gateway", type: "gateway.decision", decision: { result: "deny" }, flags: [], traceparent: "00-x", raw: { a: 1, tool: "purchase.create" } }} onJoin={noop} onClose={noop} />);
+    expect(screen.getAllByRole("button", { name: "Form" })).toHaveLength(2);
+    expect(screen.getByTestId("raw-record").tagName).toBe("DIV"); // Form view: a form, not a <pre>
+    expect(screen.getByTestId("raw-record")).toHaveTextContent("purchase.create");
+    await userEvent.click(screen.getAllByRole("button", { name: "JSON" })[0]);
+    expect(screen.getByTestId("raw-record").tagName).toBe("PRE");
+    expect(screen.getByTestId("raw-record").textContent).toBe(JSON.stringify({ a: 1, tool: "purchase.create" }, null, 2));
+    expect(screen.getByTestId("raw-envelope").textContent).toContain('"result": "deny"');
+  });
+  it("keeps the inert-text guarantee: a hidden character in the raw record shows as [U+XXXX] in both views", async () => {
+    const event = { id: "ev-9", source: "gateway", type: "gateway.decision", decision: null, flags: [], traceparent: "00-x", raw: { note: `x${String.fromCharCode(0x202e)}y` } };
+    render(<RawEvent event={event} onJoin={noop} onClose={noop} />);
+    expect(screen.getByTestId("raw-record")).toHaveTextContent("x[U+202E]y");
+    await userEvent.click(screen.getAllByRole("button", { name: "JSON" })[0]);
+    expect(screen.getByTestId("raw-record")).toHaveTextContent("x[U+202E]y");
+    expect(screen.getByTestId("raw-record").textContent).not.toContain(String.fromCharCode(0x202e));
   });
   it("does not label a gateway event as a token", () => {
     render(<RawEvent event={{ id: "ev-9", source: "gateway", type: "gateway.decision", decision: null, flags: [], traceparent: "00-x", raw: { a: 1 } }} onJoin={noop} onClose={noop} />);

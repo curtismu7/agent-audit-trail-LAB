@@ -8,7 +8,6 @@ export const chips = (text) =>
   text.split(CHIP).map((p, i) =>
     i % 2 ? <span key={i} className="chip-hidden" title="Hidden character, shown instead of hidden">{p}</span> : <React.Fragment key={i}>{p}</React.Fragment>);
 
-export function Untrusted({ text, block = false }) {
-  const Tag = block ? "pre" : "span";
-  return <Tag className={`untrusted${block ? " untrusted--block" : ""}`} data-testid="untrusted">{chips(reveal(text))}</Tag>;
+export function Untrusted({ text }) {
+  return <span className="untrusted" data-testid="untrusted">{chips(reveal(text))}</span>;
 }
