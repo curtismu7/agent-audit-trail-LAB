@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App.jsx";
+import { setJsonView } from "../components/JsonPane.jsx";
 import { diagramFixture, joinFixture } from "./fixtures.js";
 
 const SCEN = { scenarios: [{ id: "normal-purchase", title: "Normal purchase", story: "S", lesson: "L" }, { id: "orphaned-event", title: "Orphaned", story: "S2", lesson: "L2" }] };
@@ -24,11 +25,12 @@ function route(url, init) {
   if (url === "/api/chain/verify") return body({ ok: true, length: 5, headSeq: 5, headHash: "ab".repeat(32) });
   if (url.startsWith("/api/retention-demo")) return body({ retentionDays: 7, naiveUpstream: { windowDays: 30, count: 0, note: "silently empty" }, auditTool: { windowDays: 7, count: 5, clamped: true, note: "clamped to 7 days" }, storedBeyondRetention: 1 });
   if (url === "/api/reset") return body({ ok: true });
+  if (url === "/api/chain/tamper-demo") return body({ kind: "edit", change: { seq: 3, field: "event.actor", from: "agent-a", to: "agent-forged" }, before: { ok: true, length: 5 }, after: { ok: false, length: 5, firstBadSeq: 3, reason: "hash mismatch" }, liveStoreVerify: { ok: true, length: 5 }, realStoreTouched: false });
   if (url === "/api/mode") return body({ source: "mock", realAvailable: false, realReason: "Live mode is not available in this app: no live audit source (from the server)." });
   if (url === "/mcp") return body({ jsonrpc: "2.0", id: 1, result: { tools: ["search_audit_activities", "get_audit_activity", "audit_summary"].map((name) => ({ name, description: "d. more" })) } });
   return body({ error: "nope" }, 404);
 }
-beforeEach(() => { calls.length = 0; globalThis.fetch = vi.fn(route); });
+beforeEach(() => { calls.length = 0; setJsonView("form"); globalThis.fetch = vi.fn(route); });
 afterEach(() => vi.restoreAllMocks());
 
 describe("App", () => {
@@ -218,6 +220,28 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Tools" }));
     expect(await screen.findByText("3 tools advertised")).toBeInTheDocument();
     expect(screen.getByTestId("readonly-lesson")).toHaveTextContent(/exposes exactly what is implemented/);
+  });
+  it("tools tab shows the JSON-RPC request and response through the shared JsonPane", async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: "Tools" }));
+    await screen.findByText("3 tools advertised");
+    await userEvent.click(screen.getByRole("button", { name: "Call tool" }));
+    const result = await screen.findByTestId("rpc-result");
+    expect(within(result).getByTestId("rpc-request")).toHaveTextContent("tools/call");
+    expect(within(result).getByTestId("rpc-response")).toBeInTheDocument();
+    await userEvent.click(within(result).getAllByRole("button", { name: "JSON" })[0]);
+    expect(within(result).getByTestId("rpc-request").tagName).toBe("PRE");
+    expect(within(result).getByTestId("rpc-request").textContent).toContain('"jsonrpc": "2.0"');
+  });
+  it("integrity tab shows the tamper change through the shared JsonPane", async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: "Integrity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Tamper with a copy" }));
+    const change = await screen.findByTestId("tamper-change");
+    expect(change).toHaveTextContent("agent-forged");
+    await userEvent.click(within(screen.getByTestId("tamper-out")).getByRole("button", { name: "JSON" }));
+    expect(screen.getByTestId("tamper-change").tagName).toBe("PRE");
+    expect(screen.getByTestId("tamper-change").textContent).toBe(JSON.stringify({ seq: 3, field: "event.actor", from: "agent-a", to: "agent-forged" }, null, 2));
   });
   it("header Reset posts a reset and clears the story", async () => {
     render(<App />);

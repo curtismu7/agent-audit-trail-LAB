@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { rpc } from "../lib/api.js";
-import { pretty } from "../lib/format.js";
+import { JSON_HOT, pretty } from "../lib/format.js";
 import { ModelBadge, UnverifiedBadge } from "./Badges.jsx";
+import { Json } from "./JsonPane.jsx";
 import { Untrusted } from "./Untrusted.jsx";
 
 const EXAMPLES = {
@@ -59,8 +60,8 @@ export default function ToolsTab({ epoch }) {
         {error && <p className="alert" role="alert">{error}</p>}
         {result && (
           <div className="rpc" data-testid="rpc-result">
-            <h4>Request</h4><Untrusted block text={pretty(result.request)} />
-            <h4>Response</h4><Untrusted block text={pretty(result.response)} />
+            <h4>Request</h4><Json value={result.request} label="JSON-RPC request" testId="rpc-request" hot={JSON_HOT} />
+            <h4>Response</h4><Json value={result.response} label="JSON-RPC response" testId="rpc-response" hot={JSON_HOT} />
           </div>
         )}
       </div>

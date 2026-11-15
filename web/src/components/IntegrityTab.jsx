@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { tamperDemo, verifyChain } from "../lib/api.js";
-import { shortHash } from "../lib/format.js";
+import { JSON_HOT, shortHash } from "../lib/format.js";
 import { ModelBadge } from "./Badges.jsx";
+import { Json } from "./JsonPane.jsx";
 
 const KINDS = { edit: "Edit one event", "edit-and-rehash": "Edit and re-hash that entry", delete: "Delete an entry", insert: "Insert an entry", reorder: "Reorder two entries", truncate: "Cut off the newest entries" };
 
@@ -46,7 +47,7 @@ export default function IntegrityTab({ epoch }) {
         <div aria-live="polite" className="verify-slot" data-testid="tamper-out">
           {demo && (
             <>
-              {demo.change && <p className="small">Change: <span className="mono">{JSON.stringify(demo.change)}</span></p>}
+              {demo.change && <><p className="small">Change:</p><Json value={demo.change} label="Change" testId="tamper-change" hot={JSON_HOT} /></>}
               <VerdictLine v={demo.before} label="copy before" />
               <VerdictLine v={demo.after} label="copy after" />
               <VerdictLine v={demo.liveStoreVerify} label="live store" />
