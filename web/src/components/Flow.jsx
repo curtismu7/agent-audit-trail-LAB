@@ -151,6 +151,7 @@ export default function Flow({ diagram, error, boxes, setBoxes, sim, counts, sce
           </select>
         </label>
         {/* aria-disabled, not disabled: a disabled button drops keyboard focus to the page while the run is in flight. */}
+        {/* ui-pattern: allow P9 Run is primary only on Story and Retention (no view action there); on this view it is plain and Simulate is the one primary */}
         <button type="button" className="primary" onClick={simulate} aria-disabled={busy || running ? "true" : undefined} data-testid="simulate">Simulate</button>
         <button type="button" onClick={reset} data-testid="reset-diagram">Reset diagram</button>
         <span className="muted">Simulate runs the selected scenario ({scenarioTitle || "none"}) for real, queries the audit tool for it and joins it, then walks through what happened. Drag any box; on a narrow screen scroll the diagram sideways to reach the others.</span>
