@@ -29,6 +29,7 @@ export default function IntegrityTab({ epoch }) {
       <p>Every event is appended to a hash chain: each entry commits to the one before it with an HMAC. Change, remove, insert or reorder anything and verification fails at the first entry that no longer fits. Cutting off the newest entries is caught only by the separately held head checkpoint.</p>
       <div className="card">
         <h3>Verify the live store</h3>
+        {/* ui-pattern: allow P9 Run is primary only on Story and Retention (no view action there); on this view it is plain and Verify chain is the one primary */}
         <button type="button" className="primary" aria-disabled={busy ? "true" : undefined} onClick={() => { if (!busy) run(verifyChain, setVerify); }}>Verify chain</button>
         <div aria-live="polite" className="verify-slot">
           <VerdictLine v={verify} label="live store" />

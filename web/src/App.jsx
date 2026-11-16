@@ -217,7 +217,8 @@ export default function App() {
             </select>
           </div>
           {/* aria-disabled, not disabled: a disabled button drops keyboard focus to the page while the run is in flight. */}
-          <button type="button" className="primary" onClick={go} aria-disabled={busy || !scenarioId ? "true" : undefined}>Run</button>
+          {/* ui-pattern: allow P9 Run is primary only on Story and Retention (no view action there); on Events, Diagram, Integrity and Tools it is plain and the view action is the one primary */}
+          <button type="button" className={tab === "story" || tab === "retention" ? "primary" : undefined} onClick={go} aria-disabled={busy || !scenarioId ? "true" : undefined}>Run</button>
           {scenario && <p className="desc" data-testid="scenario-story"><span>{scenario.story}</span> <strong className="muted">Lesson: {scenario.lesson}</strong></p>}
         </section>
         <div role="status" aria-live="polite" className="scan-status" data-testid="run-status">{message}</div>

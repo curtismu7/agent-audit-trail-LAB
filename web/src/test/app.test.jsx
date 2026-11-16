@@ -49,6 +49,20 @@ describe("App", () => {
     expect(nav.closest("header.shell-bar")).not.toBeNull();
     expect(within(nav).getAllByRole("link").filter((l) => l.getAttribute("aria-current") === "page")).toHaveLength(1);
   });
+  it("one primary button per view: Run on Story and Retention, the view's own action elsewhere (Run is plain there)", async () => {
+    render(<App />);
+    await screen.findByText(/from the server/);
+    const nav = screen.getByRole("navigation", { name: "Views" });
+    const expected = { Story: "Run", Events: "Search", Retention: "Run", Tools: "Call tool", Integrity: "Verify chain", Diagram: "Simulate" };
+    for (const [view, action] of Object.entries(expected)) {
+      await userEvent.click(within(nav).getByRole("link", { name: view }));
+      const btn = await screen.findByRole("button", { name: action });
+      const primaries = document.querySelectorAll("button.primary");
+      expect(primaries, view).toHaveLength(1);
+      expect(primaries[0], view).toBe(btn);
+      if (action !== "Run") expect(screen.getByRole("button", { name: "Run" }), view).not.toHaveClass("primary");
+    }
+  });
   it("sends a per-tab workspace id on every request and the banner is a labelled landmark", async () => {
     render(<App />);
     await screen.findByText(/from the server/);

@@ -55,6 +55,7 @@ export default function EventsTab({ epoch, onOpen, selectedId }) {
           <select aria-label="Page size" value={draft.limit} onChange={set("limit")}>{["5", "10", "25", "50"].map((n) => <option key={n}>{n}</option>)}</select>
         </label>
         <div className="row fbtns">
+          {/* ui-pattern: allow P9 Run is primary only on Story and Retention (no view action there); on this view it is plain and Search is the one primary */}
           <button type="submit" className="primary" aria-disabled={busy ? "true" : undefined}>Search</button>
           <button type="button" onClick={clear}>Clear</button>
         </div>

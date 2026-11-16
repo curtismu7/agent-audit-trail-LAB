@@ -56,6 +56,7 @@ export default function ToolsTab({ epoch }) {
         <label className="stack">Arguments for <span className="mono">{name}</span> (JSON)
           <textarea value={args} onChange={(e) => setArgs(e.target.value)} rows={5} spellCheck="false" className="mono" aria-label="Tool arguments as JSON" />
         </label>
+        {/* ui-pattern: allow P9 Run is primary only on Story and Retention (no view action there); on this view it is plain and Call tool is the one primary */}
         <div className="row"><button type="button" className="primary" onClick={() => { if (!busy) call(); }} aria-disabled={busy ? "true" : undefined}>Call tool</button></div>
         {error && <p className="alert" role="alert">{error}</p>}
         {result && (
