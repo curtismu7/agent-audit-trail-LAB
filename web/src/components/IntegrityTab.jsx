@@ -9,7 +9,7 @@ const KINDS = { edit: "Edit one event", "edit-and-rehash": "Edit and re-hash tha
 export function VerdictLine({ v, label }) {
   if (!v) return null;
   return (
-    <p className={`verify ${v.ok ? "verify--ok" : "verify--bad"}`} data-testid={`verdict-${label}`}>
+    <p className={`audit-verify ${v.ok ? "audit-verify--ok" : "audit-verify--bad"}`} data-testid={`verdict-${label}`}>
       {v.ok ? `✓ ${label}: chain verified, ${v.length} entries.` : `✕ ${label}: TAMPERED at entry #${v.firstBadSeq ?? "?"} (${v.reason}).`}
     </p>
   );

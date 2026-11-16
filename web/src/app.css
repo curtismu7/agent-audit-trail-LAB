@@ -119,9 +119,9 @@ input[type="range"] { width: min(384px, 80vw); accent-color: var(--accent); padd
 .bigdays { font-size: 26px; font-weight: 700; }
 .toollist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 
-.verify { margin: 6px 0; padding: 8px 12px; border-radius: 8px; border: 2px solid currentcolor; font-weight: 700; background: var(--surface-2); }
-.verify--ok { color: var(--status-ok); }
-.verify--bad { color: var(--danger-text); }
+.audit-verify { margin: 6px 0; padding: 8px 12px; border-radius: 8px; border: 2px solid currentcolor; font-weight: 700; background: var(--surface-2); }
+.audit-verify--ok { color: var(--status-ok); }
+.audit-verify--bad { color: var(--danger-text); }
 .verify-slot { min-height: 32px; }
 
 .story ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(208px, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 16px 0; }
