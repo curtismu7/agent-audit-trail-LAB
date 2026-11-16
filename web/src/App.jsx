@@ -168,39 +168,40 @@ export default function App() {
   return (
     <div className={presenter ? "app app--presenter" : "app"} data-testid="app">
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }}>Skip to content</a>
-      <section className="banner" data-state="mock" aria-label="Simulation notice" data-testid="sim-banner">
-        <strong>SIMULATION, MOCK mode:</strong>{" "}
-        <span>{(info?.banner || FALLBACK_BANNER).replace(/^SIMULATION, MOCK mode:\s*/, "")}</span>{" "}
-        <UnverifiedBadge>retention ~{info?.retentionDays ?? 7} days UNVERIFIED</UnverifiedBadge>
-      </section>
-      <ReturnLink app="agent-audit-trail" />
-      {health?.unreachable && <p className="notice" role="alert">Cannot reach the API. Is the server running?</p>}
-      {health && !health.unreachable && health.state !== "ready" && <p className="notice" role="alert">Server health is {health.state}. Run <code>npm run doctor</code>.</p>}
-      <header className="top">
-        <h1>{info?.customer?.brand?.title ?? "Agent Audit Trail"}</h1>
-        <span className="chip chip--demo" data-testid="mode-badge">DEMO<span className="sr-only">: seeded synthetic events, nothing real</span></span>
-        <span className="chip" data-testid="mode-header">mode: {info?.mode ?? "mock"}</span>
-        <nav aria-label="Views" className="tabs">
-          {TABS.map(([id, label]) => <button key={id} type="button" aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
+      <header className="shell-bar">
+        <span className="shell-brand">
+          <span className="shell-logo" aria-hidden="true">AAT</span>
+          <h1>{info?.customer?.brand?.title ?? "Agent Audit Trail"}</h1>
+          <span className="shell-badge shell-badge--demo" data-testid="mode-badge">DEMO<span className="sr-only">: seeded synthetic events, nothing real</span></span>
+          <span className={info?.mode === "real" ? "shell-badge shell-badge--real" : "shell-badge"} data-testid="mode-header"><span className="sr-only">mode: </span>{info?.mode ?? "mock"}</span>
+        </span>
+        <nav aria-label="Views" className="shell-nav">
+          {TABS.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={tab === id ? "page" : undefined} onClick={(e) => { e.preventDefault(); setTab(id); }}>{label}</a>)}
         </nav>
-        <div className="tools-right">
-          <TopMenu
-            mode={{ value: source === "real" ? "real" : "mock", onChange: switchMode, realAvailable, realHint: realReason }}
-            vertical={{ value: info?.vertical ?? "retail", onChange: (v) => reset(v), options: info?.verticals ?? ["retail"] }}
-            theme={{ value: theme, onChange: setThemePersist }}
-            fontSize={{ value: fontStep, onChange: setFontStep }}
-            present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
-            help={{ href: "https://github.com/curtismu7/agent-audit-trail-LAB#readme" }}
-            version={info?.version || null}
-            onReset={() => reset()}
-          >
-            <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
-            <VerifyMark id="agent-audit-trail-lab" headers={() => ({ "X-Workspace-Id": workspaceId() })} />
-          </TopMenu>
+        <TopMenu
+          mode={{ value: source === "real" ? "real" : "mock", onChange: switchMode, realAvailable, realHint: realReason }}
+          vertical={{ value: info?.vertical ?? "retail", onChange: (v) => reset(v), options: info?.verticals ?? ["retail"] }}
+          theme={{ value: theme, onChange: setThemePersist }}
+          fontSize={{ value: fontStep, onChange: setFontStep }}
+          present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
+          help={{ href: "https://github.com/curtismu7/agent-audit-trail-LAB#readme" }}
+          version={info?.version || null}
+          onReset={() => reset()}
+        >
+          <ShelfLink headers={() => ({ "X-Workspace-Id": workspaceId() })} />
+          <VerifyMark id="agent-audit-trail-lab" headers={() => ({ "X-Workspace-Id": workspaceId() })} />
           <ReturnLink app="agent-audit-trail" variant="header" />
-        </div>
+        </TopMenu>
       </header>
       <main id="main" tabIndex={-1} className="page">
+        <section className="banner" data-state="mock" aria-label="Simulation notice" data-testid="sim-banner">
+          <strong>SIMULATION, MOCK mode:</strong>{" "}
+          <span>{(info?.banner || FALLBACK_BANNER).replace(/^SIMULATION, MOCK mode:\s*/, "")}</span>{" "}
+          <UnverifiedBadge>retention ~{info?.retentionDays ?? 7} days UNVERIFIED</UnverifiedBadge>
+        </section>
+        <ReturnLink app="agent-audit-trail" />
+        {health?.unreachable && <p className="notice" role="alert">Cannot reach the API. Is the server running?</p>}
+        {health && !health.unreachable && health.state !== "ready" && <p className="notice" role="alert">Server health is {health.state}. Run <code>npm run doctor</code>.</p>}
         <p className="notice" role="status" aria-live="polite" data-testid="live-note" hidden={!liveNote}>{liveNote}</p>
         <section className="card picker" aria-label="Run a scenario">
           <label htmlFor="scenario-select">Scenario</label>

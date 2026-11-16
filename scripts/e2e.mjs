@@ -65,7 +65,7 @@ try {
   const shot = (name) => page.screenshot({ path: path.join(shots, `${name}.png`), fullPage: true });
   const active = () => page.evaluate(() => `${document.activeElement?.tagName}|${document.activeElement?.textContent?.trim().slice(0, 40)}`);
   const status = () => page.getByTestId('run-status').innerText();
-  const tab = (name) => page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name, exact: true }).click();
+  const tab = (name) => page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name, exact: true }).click();
   const run = async (id) => {
     await page.locator('#scenario-select').selectOption(id);
     await page.getByRole('button', { name: 'Run', exact: true }).click();
@@ -78,7 +78,7 @@ try {
   await page.goto(`${base}/`);
   await page.getByTestId('mode-badge').waitFor();
   check((await page.getByTestId('mode-badge').innerText()).includes('DEMO'), 'header shows the DEMO badge');
-  check((await page.getByTestId('mode-header').innerText()).includes('mock'), 'mode header says mock');
+  check(/mock/i.test(await page.getByTestId('mode-header').innerText()), 'mode header says mock');
   const csp = (await (await fetch(`${base}/`)).headers.get('content-security-policy')) || '';
   check(/script-src 'self'/.test(csp) && !/unsafe-eval/.test(csp), 'the page is served with a same-origin CSP');
   await page.waitForFunction(() => document.querySelector('#scenario-select')?.options.length > 0);
@@ -104,7 +104,7 @@ try {
   const modeReq = await page.request.post(`http://127.0.0.1:${port}/api/mode`, { data: { source: 'real' }, headers: { origin: `http://127.0.0.1:${port}` } });
   const modeRes = { status: modeReq.status(), body: await modeReq.json() };
   check(modeRes.status === 409 && modeRes.body.source === 'mock' && modeRes.body.realAvailable === false, 'POST /api/mode {source:"real"} answers 409 and the server stays mock');
-  check((await page.getByTestId('mode-select').inputValue()) === 'mock' && (await page.getByTestId('mode-header').innerText()).includes('mock'), 'the page stays in mock mode');
+  check((await page.getByTestId('mode-select').inputValue()) === 'mock' && /mock/i.test(await page.getByTestId('mode-header').innerText()), 'the page stays in mock mode');
   check(/MOCK mode/.test(await page.getByTestId('sim-banner').innerText()) && (await page.getByTestId('sim-banner').getAttribute('data-state')) === 'mock', 'the banner says MOCK mode');
   await page.getByTestId('mode-select').selectOption('mock');
   check((await page.getByTestId('mode-select').inputValue()) === 'mock' && !(await page.getByTestId('live-note').isVisible()), 'selecting Mock keeps mock and shows no message');
@@ -187,7 +187,7 @@ try {
   check(await page.getByTestId('raw-event').locator('pre.json').count() === 2, 'the JSON view shows the envelope and the source record as JSON text');
   await page.getByRole('button', { name: /^Join/ }).click();
   await page.getByTestId('who').waitFor();
-  check(await page.getByRole('button', { name: 'Story', exact: true }).getAttribute('aria-pressed') === 'true', 'Join from a raw event opens the story tab');
+  check(await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: 'Story', exact: true }).getAttribute('aria-current') === 'page', 'Join from a raw event opens the story tab');
   // A token event shows the MOCK-ISSUED label.
   await tab('Events');
   await page.getByLabel('Source', { exact: true }).selectOption('token');

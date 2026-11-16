@@ -65,7 +65,7 @@ describe("the badge's .verify class is not shared with the lab's audit status li
     render(<App />);
     const bar = within(await screen.findByTestId("top-menu"));
     expect(await bar.findByText("Verified")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Integrity" }));
+    await userEvent.click(screen.getByRole("link", { name: "Integrity" }));
     await userEvent.click(screen.getByRole("button", { name: "Verify chain" }));
     const verdict = await screen.findByTestId("verdict-live store");
     expect(verdict).toHaveClass("audit-verify", "audit-verify--ok");

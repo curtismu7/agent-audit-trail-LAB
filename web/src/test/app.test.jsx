@@ -41,9 +41,13 @@ describe("App", () => {
     expect(screen.getByTestId("mode-header")).toHaveTextContent("mock");
     const nav = screen.getByRole("navigation", { name: "Views" });
     for (const name of ["Story", "Events", "Retention", "Tools", "Integrity", "Diagram"]) {
-      await userEvent.click(within(nav).getByRole("button", { name }));
+      await userEvent.click(within(nav).getByRole("link", { name }));
+      expect(within(nav).getByRole("link", { name })).toHaveAttribute("aria-current", "page"); // shell-nav pill marks the current view
       expect(screen.getByTestId("sim-banner")).toHaveTextContent(/SIMULATION/);
+      expect(document.querySelector("main").firstElementChild).toBe(screen.getByTestId("sim-banner")); // shell bar first, then main with the banner first
     }
+    expect(nav.closest("header.shell-bar")).not.toBeNull();
+    expect(within(nav).getAllByRole("link").filter((l) => l.getAttribute("aria-current") === "page")).toHaveLength(1);
   });
   it("sends a per-tab workspace id on every request and the banner is a labelled landmark", async () => {
     render(<App />);
@@ -64,7 +68,7 @@ describe("App", () => {
     await screen.findByText(/from the server/);
     const nav = screen.getByRole("navigation", { name: "Views" });
     for (const name of ["Story", "Events", "Retention", "Tools", "Integrity", "Diagram"]) {
-      await userEvent.click(within(nav).getByRole("button", { name }));
+      await userEvent.click(within(nav).getByRole("link", { name }));
       const mode = screen.getByTestId("mode-select");
       expect(mode).toHaveValue("mock");
     }
@@ -141,7 +145,7 @@ describe("App", () => {
     }
     fireEvent.keyDown(window, { key: "p", repeat: true });
     expect(app).not.toHaveClass("app--presenter");
-    await userEvent.click(screen.getByRole("button", { name: "Events" }));
+    await userEvent.click(screen.getByRole("link", { name: "Events" }));
     const field = await screen.findByLabelText("Tool");
     // One key at a time: "pP" in one go would toggle twice and end off even without the typing guard.
     await userEvent.type(field, "p");
@@ -194,7 +198,7 @@ describe("App", () => {
   });
   it("search: sends only the filters set, and shows the server's clamp note", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Events" }));
+    await userEvent.click(screen.getByRole("link", { name: "Events" }));
     await screen.findByText("an event");
     fireEvent.change(screen.getByLabelText("Tool"), { target: { value: "purchase.create" } });
     await userEvent.click(screen.getByRole("button", { name: "Search" }));
@@ -204,26 +208,26 @@ describe("App", () => {
   });
   it("opens the raw viewer from a result row", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Events" }));
+    await userEvent.click(screen.getByRole("link", { name: "Events" }));
     await userEvent.click(await screen.findByRole("button", { name: /Open raw event ev-1/ }));
     expect(await screen.findByTestId("raw-event")).toBeInTheDocument();
   });
   it("retention tab shows the naive zero next to the clamped answer", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Retention" }));
+    await userEvent.click(screen.getByRole("link", { name: "Retention" }));
     expect(await screen.findByTestId("naive")).toHaveTextContent("0 events");
     expect(screen.getByTestId("tool-answer")).toHaveTextContent("clamped to 7 days");
     expect(screen.getByRole("heading", { name: /Retention window/ })).toHaveTextContent("UNVERIFIED");
   });
   it("tools tab lists exactly what the endpoint advertises and states the read-only lesson", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Tools" }));
+    await userEvent.click(screen.getByRole("link", { name: "Tools" }));
     expect(await screen.findByText("3 tools advertised")).toBeInTheDocument();
     expect(screen.getByTestId("readonly-lesson")).toHaveTextContent(/exposes exactly what is implemented/);
   });
   it("tools tab shows the JSON-RPC request and response through the shared JsonPane", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Tools" }));
+    await userEvent.click(screen.getByRole("link", { name: "Tools" }));
     await screen.findByText("3 tools advertised");
     await userEvent.click(screen.getByRole("button", { name: "Call tool" }));
     const result = await screen.findByTestId("rpc-result");
@@ -235,7 +239,7 @@ describe("App", () => {
   });
   it("integrity tab shows the tamper change through the shared JsonPane", async () => {
     render(<App />);
-    await userEvent.click(screen.getByRole("button", { name: "Integrity" }));
+    await userEvent.click(screen.getByRole("link", { name: "Integrity" }));
     await userEvent.click(screen.getByRole("button", { name: "Tamper with a copy" }));
     const change = await screen.findByTestId("tamper-change");
     expect(change).toHaveTextContent("agent-forged");
