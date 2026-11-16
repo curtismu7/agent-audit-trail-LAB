@@ -1,5 +1,9 @@
 import React from "react";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App.jsx";
 import { diagramFixture, joinFixture } from "./fixtures.js";
@@ -13,6 +17,7 @@ function stub(shelf) {
     const body = (o, status = 200) => Promise.resolve({ ok: status < 400, status, json: async () => o });
     if (url === "/api/shelf") { shelfRequests.push(init); return body(shelf); }
     if (url === "/api/health") return body({ state: "ready" });
+    if (url === "/api/chain/verify") return body({ ok: true, length: 5, headSeq: 5, headHash: "ab".repeat(32) });
     if (url === "/api/info") return body({ mode: "mock", source: "mock", realAvailable: false, realReason: "mock only", modes: { mock: true, live: false }, banner: "SIMULATION, MOCK mode: from the server", retentionDays: 7, events: 5 });
     if (url.startsWith("/api/diagram")) return body({ names: ["audit-flow"], diagram: diagramFixture() });
     if (url === "/api/scenarios") return body({ scenarios: [{ id: "normal-purchase", title: "Normal purchase", story: "S", lesson: "L" }] });
@@ -49,5 +54,32 @@ describe("verification mark in the header", () => {
       expect(document.querySelector(".verify")).toBeNull();
       unmount();
     }
+  });
+});
+
+// The vendored VerifyMark.css styles the generic `.verify` class for the header badge. The lab's own audit chain status line must not share it
+// (it did: the lab's border, padding and bold restyled the badge, and the badge's flex rules restyled the status line).
+describe("the badge's .verify class is not shared with the lab's audit status line", () => {
+  it("on screen together, the badge is the only .verify and the audit line is .audit-verify", async () => {
+    stub({ shelfUrl: "http://shelf.example", demos: [{ id: "agent-audit-trail-lab", verification: mark("verified", "Verified") }] });
+    render(<App />);
+    const bar = within(await screen.findByTestId("top-menu"));
+    expect(await bar.findByText("Verified")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Integrity" }));
+    await userEvent.click(screen.getByRole("button", { name: "Verify chain" }));
+    const verdict = await screen.findByTestId("verdict-live store");
+    expect(verdict).toHaveClass("audit-verify", "audit-verify--ok");
+    expect(verdict).not.toHaveClass("verify");
+    const verifies = document.querySelectorAll(".verify");
+    expect(verifies).toHaveLength(1);
+    expect(verifies[0]).toBe(bar.getByText("Verified").closest(".verify"));
+  });
+
+  it("app.css and IntegrityTab.jsx define and use no bare verify class (verify-slot is a different class and stays)", () => {
+    const src = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const css = fs.readFileSync(path.join(src, "app.css"), "utf8");
+    expect(css).not.toMatch(/\.verify(?![\w-])/);
+    expect(css).not.toMatch(/\.verify(--|__)/);
+    expect(fs.readFileSync(path.join(src, "components", "IntegrityTab.jsx"), "utf8")).not.toMatch(/["'`\s]verify(--[\w-]+)?[\s"'`$]/);
   });
 });
