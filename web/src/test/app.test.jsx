@@ -14,7 +14,7 @@ function route(url, init) {
   calls.push([init?.method || "GET", url]);
   const body = (o, status = 200) => Promise.resolve({ ok: status < 400, status, json: async () => o });
   if (url === "/api/health") return body({ state: "ready" });
-  if (url === "/api/info") return body({ mode: "mock", source: "mock", realAvailable: false, realReason: "Live mode is not available in this app: no live audit source (from the server).", modes: { mock: true, live: false }, liveRefusal: "Live mode is not available in this app: no live audit source (from the server).", banner: "SIMULATION, MOCK mode: from the server", retentionDays: 7, events: 5 });
+  if (url === "/api/info") return body({ mode: "mock", source: "mock", realAvailable: false, realReason: "Live mode is not available in this app: no live audit source (server answer).", modes: { mock: true, live: false }, liveRefusal: "Live mode is not available in this app: no live audit source (from the server).", banner: "SIMULATION, MOCK mode: from the server", retentionDays: 7, events: 5 });
   if (url.startsWith("/api/diagram")) return body({ names: ["audit-flow"], diagram: diagramFixture() });
   if (url === "/api/scenarios") return body(SCEN);
   if (url.endsWith("/run")) return body({ traceId: "a".repeat(32), focusEventId: "ev-1", eventIds: ["ev-1", "ev-2"] });

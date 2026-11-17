@@ -4,6 +4,7 @@
 // refusal shape for a tool no policy grants. The agent key is never displayed: the server
 // scrubs every message. No dependency beyond React and the shared standalone-ui.css tokens.
 import { useEffect, useState, useCallback } from 'react';
+import { workspaceId } from '../lib/api.js';
 import './privilege-check.css';
 
 const LAYER_LABEL = {
@@ -20,14 +21,15 @@ export default function PrivilegeCheck({ apiBase = '', title = 'Privilege gatewa
   const refresh = useCallback(async () => {
     setState({ phase: 'checking' });
     try {
-      const info = await fetch(`${apiBase}/api/info`, { headers: { accept: 'application/json' } }).then((r) => r.json());
+      const info = await fetch(`${apiBase}/api/info`, { credentials: 'omit', headers: { accept: 'application/json', 'X-Workspace-Id': workspaceId() } }).then((r) => r.json());
       if (!info.realAvailable) {
         setState({ phase: 'not-configured', reason: info.realReason || info.realHowTo || 'Real is not configured.' });
         return;
       }
       const res = await fetch(`${apiBase}/api/gateway-check`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        credentials: 'omit',
+        headers: { 'content-type': 'application/json', accept: 'application/json', 'X-Workspace-Id': workspaceId() },
         body: '{}',
       });
       if (!res.ok) {
