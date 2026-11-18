@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json server/
 COPY web/package.json web/
+COPY content/talk-track.json content/talk-track.json
 RUN npm ci --ignore-scripts -w web && npm cache clean --force
 COPY web web
 RUN npm run build -w web
