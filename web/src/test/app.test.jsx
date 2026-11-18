@@ -206,7 +206,7 @@ describe("App", () => {
     await userEvent.click(screen.getByRole("button", { name: "Run" }));
     await screen.findByTestId("sentence");
     for (const [, init] of globalThis.fetch.mock.calls) {
-      expect(init.credentials).toBe("omit");
+      expect(init.credentials).toBe("same-origin");
       expect(Object.keys(init.headers).map((h) => h.toLowerCase())).not.toContain("authorization");
     }
   });

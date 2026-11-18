@@ -1,4 +1,5 @@
-// Thin fetch wrapper. Same origin only. No credentials, no cookies, no auth headers: the server refuses them.
+// Thin fetch wrapper. Same origin only. No auth headers: the server refuses them. Same-origin credentials (the
+// family lab-proxy's `lab` routing cookie rides along) are sent but never read by the server.
 // A POST body is JSON, the only body type the server accepts.
 //
 // X-Workspace-Id (not a credential, just a label) gives each browser tab its own in-memory workspace, so on a shared
@@ -15,7 +16,7 @@ export function workspaceId() {
 }
 
 async function call(path, method = "GET", body) {
-  const init = { method, headers: { Accept: "application/json", "X-Workspace-Id": workspaceId() }, credentials: "omit" };
+  const init = { method, headers: { Accept: "application/json", "X-Workspace-Id": workspaceId() }, credentials: "same-origin" };
   if (body !== undefined) { init.headers["Content-Type"] = "application/json"; init.body = JSON.stringify(body); }
   const res = await fetch(path, init);
   let data = null;

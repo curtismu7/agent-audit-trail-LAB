@@ -50,6 +50,9 @@ export const NOW = new Date('2026-10-21T12:00:00.000Z');
 export const mkRuntime = (now = () => NOW) => createRuntime({ now });
 export async function boot(slice, runtime = mkRuntime()) {
   const port = await freeBase(slice, 1);
+  // Tests run against an empty settings file: the owner's real gateway keys (AAT_GW_* in
+  // ~/Development/.env) must not flip realAvailable in assertions written for unconfigured mock.
+  process.env.STANDALONE_ENV = '/nonexistent/aat-test.env';
   const srv = await startHttpServer({ port, host: '127.0.0.1', runtime, webDist: null });
   return { ...srv, runtime };
 }
