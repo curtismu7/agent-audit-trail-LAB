@@ -119,7 +119,7 @@ try {
   await page.keyboard.press('Tab');
   check((await active()).includes('Skip to content'), 'first Tab stop is the skip link');
   let reached = false;
-  for (let i = 0; i < 20 && !reached; i++) { await page.keyboard.press('Tab'); reached = (await active()).endsWith('|Run'); }
+  for (let i = 0; i < 30 && !reached; i++) { await page.keyboard.press('Tab'); reached = (await active()).endsWith('|Run'); }
   check(reached, 'Tab reaches the Run button');
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => /^Ran "/.test(document.querySelector('[data-testid="run-status"]').textContent));

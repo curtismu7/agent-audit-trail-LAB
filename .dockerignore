@@ -11,7 +11,6 @@ web/dist
 *.log
 docs
 scripts
-content
 CHANGELOG.md
 README.md
 content-pack.json

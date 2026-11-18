@@ -17,6 +17,8 @@ import Story from "./components/Story.jsx";
 import ToolsTab from "./components/ToolsTab.jsx";
 import WhoPanel from "./components/WhoPanel.jsx";
 import PrivilegeCheck from "./privilege-check/PrivilegeCheck.jsx";
+import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import talkTrackData from "../../content/talk-track.json";
 
 const initialTheme = () => {
   const t = safe(() => localStorage.getItem("aat-theme"), null);
@@ -32,6 +34,7 @@ export default function App() {
   const [theme, setTheme] = useState(initialTheme);
   const [fontStep, setFontStep] = useState(initialFont);
   const [presenter, setPresenter] = useState(false);
+  const [talkOpen, setTalkOpen] = useState(false);
   const [tab, setTab] = useState("story");
   const [info, setInfo] = useState(null);
   const [health, setHealth] = useState(null);
@@ -185,6 +188,7 @@ export default function App() {
           theme={{ value: theme, onChange: setThemePersist }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
+          talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
           help={{ href: "https://github.com/curtismu7/agent-audit-trail-LAB#readme" }}
           version={info?.version || null}
           onReset={() => reset()}
@@ -245,6 +249,16 @@ export default function App() {
         {tab === "diagram" && <Flow diagram={diagram} error={diagramError} boxes={boxes} setBoxes={setBoxes} sim={sim} counts={counts} scenarioTitle={scenario?.title} busy={busy} resetKey={resetKey} onSimulate={go} onStep={setStoryNow} />}
         <Story active={tab === "diagram" ? storyNow : -1} />
       </main>
+      <TalkTrackDialog
+        isOpen={talkOpen}
+        onClose={() => setTalkOpen(false)}
+        title={talkTrackData.title}
+        talk={[
+          ...(talkTrackData.sayFirst ? [{ id: "say-first", title: "Say first", say: talkTrackData.sayFirst }] : []),
+          ...talkTrackData.steps,
+          { id: "close", title: "Close", say: talkTrackData.close },
+        ]}
+      />
     </div>
   );
 }
