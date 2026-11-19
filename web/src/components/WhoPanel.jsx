@@ -55,11 +55,11 @@ export function Timeline({ join, onOpen }) {
   );
 }
 
-export default function WhoPanel({ join, error, onOpen, headingRef }) {
-  if (error) return <section className="card" aria-labelledby="who-title"><h2 id="who-title" tabIndex={-1} ref={headingRef}>Who did what</h2><p className="alert" role="alert">{error}</p></section>;
+export default function WhoPanel({ join, error, onOpen, headingRef, num }) {
+  if (error) return <section className="card" aria-labelledby="who-title"><h2 id="who-title" tabIndex={-1} ref={headingRef}>{num != null && <span className="step-num" data-n={num} aria-hidden="true"></span>}Who did what</h2><p className="alert" role="alert">{error}</p></section>;
   if (!join) return (
     <section className="card empty" aria-labelledby="who-title">
-      <h2 id="who-title" tabIndex={-1} ref={headingRef}>Who did what, through which agent</h2>
+      <h2 id="who-title" tabIndex={-1} ref={headingRef}>{num != null && <span className="step-num" data-n={num} aria-hidden="true"></span>}Who did what, through which agent</h2>
       <p>Pick a scenario and press Run. The audit tools will be queried and the events joined into one story.</p>
     </section>
   );
@@ -67,7 +67,7 @@ export default function WhoPanel({ join, error, onOpen, headingRef }) {
   const inferred = join.hops.filter((h) => h.present && h.inferredOnly).length;
   return (
     <section className="card who" aria-labelledby="who-title" data-testid="who">
-      <h2 id="who-title" tabIndex={-1} ref={headingRef}>Who did what, through which agent</h2>
+      <h2 id="who-title" tabIndex={-1} ref={headingRef}>{num != null && <span className="step-num" data-n={num} aria-hidden="true"></span>}Who did what, through which agent</h2>
       <div className="badges">
         {join.orphan && <span className="badge badge--orphan" data-testid="orphan-badge">ORPHAN: no correlation id</span>}
         {join.ambiguous && <span className="badge badge--orphan">AMBIGUOUS: session matches more than one trace</span>}

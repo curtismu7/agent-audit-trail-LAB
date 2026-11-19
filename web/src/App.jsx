@@ -211,6 +211,7 @@ export default function App() {
         <PrivilegeCheck />
         <p className="notice" role="status" aria-live="polite" data-testid="live-note" hidden={!liveNote}>{liveNote}</p>
         <section className="card picker" aria-label="Run a scenario">
+          <h2 className="picker__title"><span className="step-num" data-n="1" aria-hidden="true"></span>Run a scenario</h2>
           <label htmlFor="scenario-select">Scenario</label>
           <div className="field">
             <select id="scenario-select" value={scenarioId} onChange={(e) => setScenarioId(e.target.value)} disabled={!scenarios.length}>
@@ -233,7 +234,7 @@ export default function App() {
 
         {tab === "story" && (
           <div className="workspace">
-            <WhoPanel join={join} error={joinError} onOpen={openRaw} headingRef={whoHeading} />
+            <WhoPanel num={2} join={join} error={joinError} onOpen={openRaw} headingRef={whoHeading} />
             {rawPane}
           </div>
         )}
@@ -246,8 +247,11 @@ export default function App() {
         {tab === "retention" && <RetentionTab epoch={epoch} />}
         {tab === "tools" && <ToolsTab epoch={epoch} />}
         {tab === "integrity" && <IntegrityTab epoch={epoch} />}
-        {tab === "diagram" && <Flow diagram={diagram} error={diagramError} boxes={boxes} setBoxes={setBoxes} sim={sim} counts={counts} scenarioTitle={scenario?.title} busy={busy} resetKey={resetKey} onSimulate={go} onStep={setStoryNow} />}
-        <Story active={tab === "diagram" ? storyNow : -1} />
+        {tab === "diagram" && <div className="duo">
+          <Flow diagram={diagram} error={diagramError} boxes={boxes} setBoxes={setBoxes} sim={sim} counts={counts} scenarioTitle={scenario?.title} busy={busy} resetKey={resetKey} onSimulate={go} onStep={setStoryNow} />
+          <Story active={storyNow} />
+        </div>}
+        {tab !== "diagram" && <Story active={-1} />}
       </main>
       <TalkTrackDialog
         isOpen={talkOpen}

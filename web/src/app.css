@@ -57,7 +57,18 @@ input[type="range"] { width: min(384px, 80vw); accent-color: var(--accent); padd
 .stack { display: flex; flex-direction: column; gap: 4px; }
 .lesson { padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--surface); }
 
+/* Numbered story badge next to section headings (UI-RELAYOUT-PATTERN.md): digit comes from data-n, so heading text is unchanged. */
+.step-num { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent-gradient); color: var(--on-accent); font: 700 12px var(--font-mono);
+  margin-right: 8px; vertical-align: 2px; }
+.step-num::before { content: attr(data-n); }
+/* Paired panels (diagram + story strip) share one row; stack when narrow (UI-RELAYOUT-PATTERN.md rule 4). */
+.duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.duo > * { min-width: 0; }
+@media (max-width: 900px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+
 .picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.picker__title { margin: 0 0 4px; flex-basis: 100%; }
 .picker label { margin: 0; color: var(--muted); }
 .picker .field { min-width: 0; max-width: 100%; }
 .picker select { min-width: 0; max-width: 100%; }
@@ -138,7 +149,8 @@ input[type="range"] { width: min(384px, 80vw); accent-color: var(--accent); padd
 .audit-verify--bad { color: var(--danger-text); }
 .verify-slot { min-height: 32px; }
 
-.story ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(208px, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 16px 0; }
+/* Story strip: the five-step walkthrough reads as one stacked column (UI-RELAYOUT-PATTERN.md rule 2). */
+.story ol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; list-style: none; padding: 0; margin: 16px 0; }
 .story li { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 13px; }
 .story li.now { border-color: var(--accent); border-left-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .story li span { color: var(--muted); }
