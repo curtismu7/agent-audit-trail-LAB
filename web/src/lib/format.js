@@ -1,7 +1,7 @@
 export const shortHash = (h) => (h ? String(h).slice(0, 12) : "none");
 export const pretty = (v) => JSON.stringify(v, null, 2);
-// The keys a reader looks for first in this lab's JSON: who acted, for whom, which tool, the correlation id, the delegation chain.
-export const JSON_HOT = ["actor", "subject", "tool", "traceId", "delegation", "agent_id", "on_behalf_of", "clamped"];
+// The keys a reader looks for first in this lab's JSON: who acted, for whom, which tool. (Hot is a union with the pane's own defaults.)
+export const JSON_HOT = ["actor", "subject", "tool"];
 export const clock = (iso) => (iso ? String(iso).replace("T", " ").replace(/\.\d+Z$/, "Z") : "");
 export const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 export const safe = (fn, fallback) => { try { return fn(); } catch { return fallback; } };
