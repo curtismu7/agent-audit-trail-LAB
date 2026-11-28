@@ -12,6 +12,7 @@ Who did what through which agent. Seeded synthetic events from six sources -> no
 - Ports 6600-6649 only (server 6600, vite 6610, e2e 6620-6629, tests 6630-6649 via `server/test/helpers.js`, CI doctor 6609). Bind 127.0.0.1; Docker publishes loopback only.
 - Settings come only from the one shared file `~/Development/.env` (or `STANDALONE_ENV`), through `util.parseEnv`, taking one key, `AAT_LAB_MODE`. No per-app `.env` loader, never a bare `MODE`, no `process.env.MODE`.
 - No network, no credentials, no tenant. Hosts are `.example`. The netguard (`server/src/netguard.js`, incl. UDP send and connect) is installed first and has a self-test. Retention (~7 days) is UNVERIFIED, "as observed in the demo environment": say so wherever it is stated.
+- The default story is AirGuard Airlines, a fictional airline (pack `airlines` in `server/src/cast.js`, `DEFAULT_VERTICAL`). The `retail`, `banking` and `healthcare` packs stay selectable. Add every new story token to all four packs; `server/test/airlineDefault.test.js` also sweeps the airline run for other-brand and retired names.
 - The tool surface is exactly three read-only tools over a read-only store view. Never add a write tool. Demo controls (run, reset, tamper) are not tools.
 - The join sentence is built only from event fields; every fact cites event ids. Every event string is inert (hidden characters shown as [U+XXXX]). Tests use injected clocks (`NOW` in helpers), no sleeps.
 - The hash chain uses HMAC; no EC key generation (`generateKeyPair`), ever.

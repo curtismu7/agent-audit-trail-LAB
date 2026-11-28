@@ -30,9 +30,9 @@ test('normal purchase: full timeline, complete hops, no gaps, a sentence from it
   assert.deepEqual(hopsPresent(j), ['identity', 'token', 'gateway', 'policy', 'tool']);
   assert.deepEqual(gapIds(j), []);
   assert.equal(j.timeline.length, 6);
-  assert.equal(j.sentence, 'Alice Example (user-alice) signed in (linked by session id only, an inference); Purchasing Agent (agent-purchasing) acted on their behalf; policy rule within-limit returned permit; the gateway allowed purchase.create (policy permit); the tool server answered 201 (success).');
-  assert.deepEqual(j.delegation.chain, ['agent-purchasing']);
-  assert.equal(j.delegation.text, 'user-alice -> agent-purchasing');
+  assert.equal(j.sentence, 'Emma Hartley (user-emma) signed in (linked by session id only, an inference); Passenger Chat Agent (agent-passenger-chat) acted on their behalf; policy rule within-limit returned permit; the gateway allowed issue_refund (policy permit); the tool server answered 201 (success).');
+  assert.deepEqual(j.delegation.chain, ['agent-passenger-chat']);
+  assert.equal(j.delegation.text, 'user-emma -> agent-passenger-chat');
 });
 
 test('timeline is in time order, offsets start at zero, and links are labelled', () => {
@@ -51,7 +51,7 @@ test('denied scope: policy deny and gateway deny, no tool result, and that is NO
   const j = createJoin(store.view).byTrace(run.traceId);
   assert.deepEqual(gapIds(j), []);
   assert.ok(!hopsPresent(j).includes('tool'));
-  assert.match(j.sentence, /the gateway denied purchase\.create \(token lacks scope purchase:write\)/);
+  assert.match(j.sentence, /the gateway denied issue_refund \(token lacks scope refunds:write\)/);
   assert.match(j.sentence, /policy rule scope-required returned deny/);
   assert.match(j.sentence, /the tool was not reached|no tool result is recorded after the denial/);
 });
@@ -61,8 +61,8 @@ test('paused and approved: two humans are named, in order, and the call complete
   const j = createJoin(store.view).byTrace(run.traceId);
   assert.deepEqual(gapIds(j), []);
   assert.deepEqual(hopsPresent(j), ['identity', 'token', 'gateway', 'policy', 'approval', 'tool']);
-  assert.match(j.sentence, /Carla Placeholder \(user-carla\) signed in/);
-  assert.match(j.sentence, /the gateway paused purchase\.create.*a human approval was requested; Dmitri Approver \(user-dmitri\) approved the call; the gateway allowed purchase\.create.*the tool server answered 201/);
+  assert.match(j.sentence, /Grace Okafor \(user-grace\) signed in/);
+  assert.match(j.sentence, /the gateway paused issue_refund.*a human approval was requested; Priya Nair \(user-priya\) approved the call; the gateway allowed issue_refund.*the tool server answered 201/);
 });
 
 test('killed mid-run: the kill switch (no trace id) is attached by session and labelled inferred', () => {
@@ -70,8 +70,8 @@ test('killed mid-run: the kill switch (no trace id) is attached by session and l
   const j = createJoin(store.view).byTrace(run.traceId);
   const kill = j.timeline.find((e) => e.type === 'killswitch.kill');
   assert.ok(kill); assert.equal(kill.link, 'session-inferred'); assert.equal(kill.traceId, null);
-  assert.match(j.sentence, /Olga Operator \(user-olga\) fired the kill switch for Purchasing Agent \(agent-purchasing\) \(runaway spend suspected\)/);
-  assert.match(j.sentence, /the gateway denied purchase\.create \(agent-killed\); no tool result is recorded after the denial/);
+  assert.match(j.sentence, /Dana Olsen \(user-dana\) fired the kill switch for Passenger Chat Agent \(agent-passenger-chat\) \(runaway spend suspected\)/);
+  assert.match(j.sentence, /the gateway denied issue_refund \(agent-killed\); no tool result is recorded after the denial/);
   assert.deepEqual(gapIds(j), []);
   // joining from the kill event itself lands on the same transaction
   const fromKill = createJoin(store.view).byEvent(kill.id);
@@ -84,10 +84,10 @@ test('orphan: an event with no correlation id is shown as orphaned, not joined, 
   const j = rt.join.byEvent(o.focusEventId);
   assert.equal(j.orphan, true); assert.equal(j.traceId, null); assert.equal(j.timeline.length, 1);
   assert.match(j.sentence, /no human subject is recorded/);
-  assert.match(j.sentence, /agent-build-bot acted, with no human recorded/);
-  assert.match(j.sentence, /retry\[U\+200B\] from build-bot/, 'the hidden character is visible');
+  assert.match(j.sentence, /agent-roster-sync-bot acted, with no human recorded/);
+  assert.match(j.sentence, /retry\[U\+200B\] from roster-sync-bot/, 'the hidden character is visible');
   assert.match(j.sentence, /no correlation id/);
-  for (const name of ['Alice', 'Bao', 'Carla', 'Dmitri', 'Olga', 'Purchasing', 'Booking']) assert.doesNotMatch(j.sentence, new RegExp(name), `${name} must not appear`);
+  for (const name of ['Emma', 'Noah', 'Grace', 'Priya', 'Dana', 'Passenger', 'Rebooking']) assert.doesNotMatch(j.sentence, new RegExp(name), `${name} must not appear`);
   assert.ok(j.notes[0].match(/no correlation id/));
   assert.deepEqual(gapIds(j), [], 'an orphan has no analysed hops, only the orphan marker');
 });
@@ -107,9 +107,9 @@ test('orphan: other events from the same agent are listed as possibly related bu
 test('two-hop delegation: the nested act claim gives the chain human -> orchestrator -> sub-agent', () => {
   const { store, run } = fresh('two-hop-delegation');
   const j = createJoin(store.view).byTrace(run.traceId);
-  assert.deepEqual(j.delegation.chain, ['agent-orchestrator', 'agent-booking']);
-  assert.equal(j.delegation.text, 'user-alice -> agent-orchestrator -> agent-booking');
-  assert.match(j.sentence, /Booking Sub-agent \(agent-booking\) acted on their behalf through the delegation chain Alice Example \(user-alice\) -> Trip Orchestrator \(agent-orchestrator\) -> Booking Sub-agent \(agent-booking\)/);
+  assert.deepEqual(j.delegation.chain, ['agent-disruption-orchestrator', 'agent-rebooking']);
+  assert.equal(j.delegation.text, 'user-emma -> agent-disruption-orchestrator -> agent-rebooking');
+  assert.match(j.sentence, /Rebooking Specialist \(agent-rebooking\) acted on their behalf through the delegation chain Emma Hartley \(user-emma\) -> Disruption Orchestrator \(agent-disruption-orchestrator\) -> Rebooking Specialist \(agent-rebooking\)/);
   assert.equal(j.timeline.filter((e) => e.type === 'token.exchanged').length, 2);
   assert.deepEqual(gapIds(j), []);
 });

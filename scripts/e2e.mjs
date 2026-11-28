@@ -43,7 +43,7 @@ if (!up) { server.kill(); console.error('server did not start'); process.exit(2)
 fs.mkdirSync(shots, { recursive: true });
 
 const SCENARIOS = [
-  ['normal-purchase', 'Normal purchase'],
+  ['normal-purchase', 'Normal call'],
   ['denied-scope', 'Denied'],
   ['paused-approved', 'Paused'],
   ['killed-mid-run', 'Agent killed'],

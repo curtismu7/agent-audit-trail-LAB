@@ -3,7 +3,7 @@
 // Loopback only, port 6600-6649 only. It does not start a server and touches no file.
 //   node scripts/reset.mjs                       reset the default workspace on AUDIT_TRAIL_PORT (default 6600)
 //   AUDIT_TRAIL_WORKSPACE=ws-1234 node scripts/reset.mjs    reset one workspace
-//   node scripts/reset.mjs --vertical=banking    also switch the cast (retail | banking | healthcare)
+//   node scripts/reset.mjs --vertical=banking    also switch the cast (airlines | retail | banking | healthcare)
 // The header Reset button in the web app does the same and also puts the diagram boxes back where they started.
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
