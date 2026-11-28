@@ -60,11 +60,28 @@ const HEALTH = {
   hosts: { gateway: 'gateway.example', idp: 'idp.example', policy: 'policy.example' },
 };
 
-// Three vertical packs with the same shape: stories refer to {{users.alice.name}} and so on, and each pack fills them in
+const AIRLINES = {
+  users: { alice: user('emma', 'Emma Hartley'), bao: user('noah', 'Noah Reyes'), carla: user('grace', 'Grace Okafor'), dmitri: user('priya', 'Priya Nair'), olga: user('dana', 'Dana Olsen') },
+  agents: {
+    purchasing: { id: 'agent-passenger-chat', name: 'Passenger Chat Agent' }, orchestrator: { id: 'agent-disruption-orchestrator', name: 'Disruption Orchestrator' },
+    booking: { id: 'agent-rebooking', name: 'Rebooking Specialist' }, buildbot: { id: 'agent-roster-sync-bot', name: 'Roster Sync Bot' }, researcher: { id: 'agent-rogue-travel-bot', name: 'Rogue Travel Bot' },
+  },
+  apps: { shop: { id: 'client-passenger-web', name: 'AirGuard Airlines Passenger App' }, travel: { id: 'client-rebooking-web', name: 'AirGuard Airlines Rebooking Portal' } },
+  tools: {
+    purchase: { name: 'issue_refund', resource: 'https://payments.airguard.example/api/refunds', scope: 'refunds:write' },
+    lookup: { name: 'get_itinerary', resource: 'https://reservations.airguard.example/api/itineraries', scope: 'itineraries:read' },
+    book: { name: 'request_rebooking', resource: 'https://reservations.airguard.example/api/rebookings', scope: 'rebookings:write' },
+    deploy: { name: 'sync_crew_roster', resource: 'https://crew.airguard.example/api/rosters', scope: 'crew:sync' },
+  },
+  hosts: { gateway: 'gateway.airguard.example', idp: 'idp.airguard.example', policy: 'policy.airguard.example' },
+};
+
+// Four vertical packs with the same shape: stories refer to {{users.alice.name}} and so on, and each pack fills them in
 // with its own fictional people, agents and tools. Every pack must define every token a story uses (a test checks it).
-export const PACKS = { retail: RETAIL, banking: BANKING, healthcare: HEALTH };
-export const DEFAULT_VERTICAL = 'retail';
-export const CAST = RETAIL;
+// AirGuard Airlines (a fictional airline) is the default story; the three older packs stay selectable.
+export const PACKS = { airlines: AIRLINES, retail: RETAIL, banking: BANKING, healthcare: HEALTH };
+export const DEFAULT_VERTICAL = 'airlines';
+export const CAST = AIRLINES;
 export const castFor = (vertical = DEFAULT_VERTICAL) => (Object.hasOwn(PACKS, vertical) ? PACKS[vertical] : null);
 
 const lookup = (path, cast) => path.split('.').reduce((o, k) => (o !== null && typeof o === 'object' && Object.hasOwn(o, k) ? o[k] : undefined), cast);

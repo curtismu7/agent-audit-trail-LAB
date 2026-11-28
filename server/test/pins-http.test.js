@@ -136,8 +136,8 @@ import { createRuntime } from '../src/runtime.js';
 import { allPassed, runChecks } from '../src/doctor.js';
 import { NOW } from './helpers.js';
 
-test('VERTICAL PACKS: three packs, every story token resolves in every pack, an undefined token fails in each', () => {
-  assert.deepEqual(Object.keys(PACKS).sort(), ['banking', 'healthcare', 'retail']);
+test('VERTICAL PACKS: four packs, every story token resolves in every pack, an undefined token fails in each', () => {
+  assert.deepEqual(Object.keys(PACKS).sort(), ['airlines', 'banking', 'healthcare', 'retail']);
   for (const [name, cast] of Object.entries(PACKS)) {
     for (const s of SCENARIOS) {
       assert.ok(tokensIn(s.story).length > 0);
@@ -149,7 +149,7 @@ test('VERTICAL PACKS: three packs, every story token resolves in every pack, an 
   assert.equal(castFor('nope'), null); assert.equal(castFor('__proto__'), null); assert.equal(castFor('constructor'), null);
   // The packs really differ: a story names different people and tools.
   const texts = Object.values(PACKS).map((c) => resolveTokens(SCENARIOS[0].story, c));
-  assert.equal(new Set(texts).size, 3);
+  assert.equal(new Set(texts).size, 4);
 });
 
 test('VERTICAL PACKS: each pack seeds a store whose join sentence uses that pack\'s names only', () => {
@@ -160,6 +160,7 @@ test('VERTICAL PACKS: each pack seeds a store whose join sentence uses that pack
     assert.equal(rt.store.chain.verify().ok, true);
     assert.match(j.sentence, new RegExp(cast.users.alice.name)); assert.match(j.sentence, new RegExp(cast.tools.purchase.name.replace('.', '\\.')));
     if (name !== 'retail') assert.doesNotMatch(j.sentence, /Alice Example|purchase\.create/);
+    if (name !== 'airlines') assert.doesNotMatch(j.sentence, /Emma Hartley|issue_refund/);
   }
   assert.throws(() => createRuntime({ vertical: 'nope' }), /unknown vertical/);
 });
@@ -233,7 +234,8 @@ test('CUSTOMER CONFIG: bounded plain labels, bad values fall back, the shipped f
   assert.equal(c.brand.title, 'Acme Audit'); assert.equal(c.brand.tagline, DEFAULT_CUSTOMER.brand.tagline);
   assert.equal(c.vocabulary.agent, 'agent', 'markup is refused'); assert.equal(c.vocabulary.human, 'member'); assert.equal(c.vertical, 'banking');
   assert.equal(normalizeCustomer({ brand: { title: 'a​b' } }).brand.title, DEFAULT_CUSTOMER.brand.title, 'hidden characters are refused');
-  assert.equal(normalizeCustomer({ vertical: '__proto__' }).vertical, 'retail');
+  assert.equal(normalizeCustomer({ vertical: '__proto__' }).vertical, 'airlines');
+  assert.equal(normalizeCustomer({ vertical: 'retail' }).vertical, 'retail', 'a saved retail config keeps working');
   const shipped = loadCustomer(); // reads customer.config.json (git-ignored); the defaults when it is absent
   assert.deepEqual(shipped, normalizeCustomer(shipped));
   assert.deepEqual(loadCustomer('/no/such/file.json'), DEFAULT_CUSTOMER);

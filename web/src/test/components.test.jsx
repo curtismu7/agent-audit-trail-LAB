@@ -80,13 +80,13 @@ describe("raw event viewer", () => {
     expect(screen.getByTestId("raw-record")).toBeInTheDocument();
   });
   it("shows both records through the shared JsonPane: Form first, the exact JSON text after the JSON button, nothing capped", async () => {
-    render(<RawEvent event={{ id: "ev-9", source: "gateway", type: "gateway.decision", decision: { result: "deny" }, flags: [], traceparent: "00-x", raw: { a: 1, tool: "purchase.create" } }} onJoin={noop} onClose={noop} />);
+    render(<RawEvent event={{ id: "ev-9", source: "gateway", type: "gateway.decision", decision: { result: "deny" }, flags: [], traceparent: "00-x", raw: { a: 1, tool: "issue_refund" } }} onJoin={noop} onClose={noop} />);
     expect(screen.getAllByRole("button", { name: "Form" })).toHaveLength(2);
     expect(screen.getByTestId("raw-record").tagName).toBe("DIV"); // Form view: a form, not a <pre>
-    expect(screen.getByTestId("raw-record")).toHaveTextContent("purchase.create");
+    expect(screen.getByTestId("raw-record")).toHaveTextContent("issue_refund");
     await userEvent.click(screen.getAllByRole("button", { name: "JSON" })[0]);
     expect(screen.getByTestId("raw-record").tagName).toBe("PRE");
-    expect(screen.getByTestId("raw-record").textContent).toBe(JSON.stringify({ a: 1, tool: "purchase.create" }, null, 2));
+    expect(screen.getByTestId("raw-record").textContent).toBe(JSON.stringify({ a: 1, tool: "issue_refund" }, null, 2));
     expect(screen.getByTestId("raw-envelope").textContent).toContain('"result": "deny"');
   });
   it("keeps the inert-text guarantee: a hidden character in the raw record shows as [U+XXXX] in both views", async () => {

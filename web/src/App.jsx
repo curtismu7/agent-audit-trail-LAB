@@ -187,7 +187,7 @@ export default function App() {
         </nav>
         <TopMenu
           mode={{ value: source === "real" ? "real" : "mock", onChange: switchMode, realAvailable, realHint: realReason }}
-          vertical={{ value: info?.vertical ?? "retail", onChange: (v) => reset(v), options: info?.verticals ?? ["retail"] }}
+          vertical={{ value: info?.vertical ?? "airlines", onChange: (v) => reset(v), options: info?.verticals ?? ["airlines"] }}
           theme={{ value: theme, onChange: setThemePersist }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
@@ -223,8 +223,8 @@ export default function App() {
           </div>
           <label htmlFor="vertical-select">Cast</label>
           <div className="field">
-            <select id="vertical-select" value={info?.vertical ?? "retail"} onChange={(e) => reset(e.target.value)} disabled={!info?.verticals}>
-              {(info?.verticals ?? ["retail"]).map((v) => <option key={v} value={v}>{v}</option>)}
+            <select id="vertical-select" value={info?.vertical ?? "airlines"} onChange={(e) => reset(e.target.value)} disabled={!info?.verticals}>
+              {(info?.verticals ?? ["airlines"]).map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
           </div>
           {/* aria-disabled, not disabled: a disabled button drops keyboard focus to the page while the run is in flight. */}

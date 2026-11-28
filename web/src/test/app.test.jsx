@@ -214,9 +214,9 @@ describe("App", () => {
     render(<App />);
     await userEvent.click(screen.getByRole("link", { name: "Events" }));
     await screen.findByText("an event");
-    fireEvent.change(screen.getByLabelText("Tool"), { target: { value: "purchase.create" } });
+    fireEvent.change(screen.getByLabelText("Tool"), { target: { value: "issue_refund" } });
     await userEvent.click(screen.getByRole("button", { name: "Search" }));
-    await waitFor(() => expect(calls.some(([, u]) => u.startsWith("/api/events?") && u.includes("tool=purchase.create"))).toBe(true));
+    await waitFor(() => expect(calls.some(([, u]) => u.startsWith("/api/events?") && u.includes("tool=issue_refund"))).toBe(true));
     const q = calls.filter(([, u]) => u.startsWith("/api/events?")).pop()[1];
     expect(q).not.toContain("source="); // empty filters are not sent
   });

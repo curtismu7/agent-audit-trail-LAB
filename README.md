@@ -130,8 +130,8 @@ Six tabs, a simulation banner and a `mode: mock` header on every one, a DEMO bad
 | 3 doctor, Reset, presenter mode, talk track | `npm run doctor`, `npm run reset` and `POST /api/reset`, the `P` key, `content/talk-track.json` -> `docs/talk-track.md` |
 | 6 Learning Hub pack | `content-pack.json` (`npm run content-pack` regenerates and validates it against `docs/content-pack.schema.json`, a copy of the Learning Hub's schema, kept in step by hand) |
 | 9 shelf entry | `docs/shelf-entry.json` (portable `composeFile`, catalog id `D17`) |
-| 10 stories as data, 3 vertical packs | `server/src/scenarios.js` stories with `{{cast}}` tokens; `server/src/cast.js` packs `retail`, `banking`, `healthcare`; a test fails on an undefined token in any pack. Switch with the Cast select or `POST /api/reset {"vertical":"banking"}` |
-| 12 `customer.config` | `customer.config.example.json` (copy to the git-ignored `customer.config.json`): brand title and tagline, vocabulary, default vertical; bounded plain labels only, bad values fall back |
+| 10 stories as data, 4 vertical packs | `server/src/scenarios.js` stories with `{{cast}}` tokens; `server/src/cast.js` packs `airlines` (the default: AirGuard Airlines, a fictional airline), `retail`, `banking`, `healthcare`; a test fails on an undefined token in any pack. Switch with the Cast select or `POST /api/reset {"vertical":"banking"}`; an unknown id in `customer.config.json` falls back to `airlines` |
+| 12 `customer.config` | `customer.config.example.json` (copy to the git-ignored `customer.config.json`): brand title and tagline, vocabulary, default vertical (`airlines`); bounded plain labels only, bad values fall back |
 | 13 workspace id | `X-Workspace-Id` header, see above |
 | 15 health | `GET /api/health` |
 | 17 diagrams | `server/diagrams/audit-flow.json`, served by `GET /api/diagram` |
@@ -178,7 +178,7 @@ Demo controls (not audit tools):
 
 | id | what it teaches |
 |---|---|
-| `normal-purchase` | one complete chain: human, sign-in, token exchange, policy, gateway, tool |
+| `normal-purchase` | (a refund in the default airline story) one complete chain: human, sign-in, token exchange, policy, gateway, tool |
 | `denied-scope` | a scope-exceeding call is denied; no tool result after a deny is not a gap |
 | `paused-approved` | the gateway pauses, a second human approves, the call resumes |
 | `killed-mid-run` | the kill switch has no trace id; it joins by session and time window and is labelled inferred |
