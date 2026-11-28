@@ -18,6 +18,8 @@ import ToolsTab from "./components/ToolsTab.jsx";
 import WhoPanel from "./components/WhoPanel.jsx";
 import PrivilegeCheck from "./privilege-check/PrivilegeCheck.jsx";
 import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import HelpDialog from "./help-dialog/HelpDialog.jsx";
+import { HELP_SECTIONS } from "./helpContent";
 import talkTrackData from "../../content/talk-track.json";
 
 const initialTheme = () => {
@@ -35,6 +37,7 @@ export default function App() {
   const [fontStep, setFontStep] = useState(initialFont);
   const [presenter, setPresenter] = useState(false);
   const [talkOpen, setTalkOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [tab, setTab] = useState("story");
   const [info, setInfo] = useState(null);
   const [health, setHealth] = useState(null);
@@ -189,7 +192,7 @@ export default function App() {
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((p) => !p), label: "Presenter mode (P)" }}
           talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
-          help={{ href: "https://github.com/curtismu7/agent-audit-trail-LAB#readme" }}
+          help={{ onClick: () => setHelpOpen(true), title: "What this lab is, and what is simulated" }}
           version={info?.version || null}
           onReset={() => reset()}
         >
@@ -253,6 +256,7 @@ export default function App() {
         </div>}
         {tab !== "diagram" && <Story active={-1} />}
       </main>
+      <HelpDialog isOpen={helpOpen} onClose={() => setHelpOpen(false)} sections={HELP_SECTIONS} docsUrl="https://github.com/curtismu7/agent-audit-trail-LAB#readme" />
       <TalkTrackDialog
         isOpen={talkOpen}
         onClose={() => setTalkOpen(false)}
